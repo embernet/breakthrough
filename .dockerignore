@@ -1,0 +1,12 @@
+.git/
+node_modules/
+data/
+backups/
+*.db
+*.db-wal
+*.db-shm
+.env
+scripts/
+test/
+README.md
+docker-compose*.yml

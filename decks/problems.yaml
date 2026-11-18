@@ -1,0 +1,52 @@
+# Breakthrough problem deck: the problems that rise from the bottom of the well.
+#
+# Each entry is a short label (max 18 characters, so it fits on a row) and an
+# optional note. Drop your own deck in DATA_DIR/decks/problems.yaml to override
+# this one, e.g. for a workshop warm-up. No restart needed.
+name: Organisation & technology
+problems:
+  - label: Data silos
+    note: Teams can't see each other's data.
+  - label: Legacy monolith
+    note: One big system nobody dares change.
+  - label: Slow approvals
+    note: Decisions wait weeks for sign-off.
+  - label: Tech debt
+  - label: Skills gap
+  - label: Vendor lock-in
+  - label: Manual handoffs
+  - label: Unclear ownership
+  - label: Alert fatigue
+  - label: Shadow IT
+  - label: Meeting overload
+  - label: Siloed teams
+  - label: Flaky tests
+  - label: Slow releases
+  - label: Low adoption
+  - label: Scope creep
+  - label: Budget freeze
+  - label: Key-person risk
+  - label: Duplicate tools
+  - label: Poor data quality
+  - label: Security backlog
+  - label: Compliance drag
+  - label: Hiring freeze
+  - label: Burnout
+  - label: Hidden costs
+  - label: No feedback loop
+  - label: Spreadsheet sprawl
+  - label: Unclear strategy
+  - label: Change fatigue
+  - label: Brittle pipelines
+  - label: Long lead times
+  - label: Knowledge loss
+  - label: Customer churn
+  - label: Rising cloud bill
+  - label: Integration hell
+  - label: Not invented here
+  - label: Pilot purgatory
+  - label: Data privacy risk
+  - label: Outdated docs
+  - label: Single point fail
+  - label: Talent drain
+  - label: Priority overload

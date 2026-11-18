@@ -350,7 +350,7 @@
     const dist = target - g.active.y;
     g.active = { ...g.active, y: target };
     g.score += dist * SCORE.hardDropCell;
-    g.events.push({ type: 'hardDrop', distance: dist, cells: pieceCells(g.active) });
+    g.events.push({ type: 'hardDrop', distance: dist, cells: pieceCells(g.active), pieceType: g.active.type });
     lockPiece(g);
     return dist;
   }
