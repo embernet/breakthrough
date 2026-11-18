@@ -290,6 +290,11 @@ kbd {
   .topbar .brand { font-size: 1.1rem; }
   #mode-select { max-width: 11.5rem; font-size: .82rem; }
   .fits, .right-for { display: none; }
+  #start-desc, .panel-card .keys, .panel-card .lead { display: none; }
+  .panel-card { padding: .8rem; }
+  .brand.big { font-size: 1.6rem; }
+  .howto { font-size: .8rem; gap: .3rem; margin-bottom: .7rem; }
+  .portal-link { padding: .3rem .55rem; }
   .layout {
     grid-template-columns: 1fr auto;
     grid-template-areas: "well left" "well right";
@@ -297,7 +302,7 @@ kbd {
   }
   .well-wrap {
     grid-area: well; justify-self: center;
-    width: min(100%, calc((100dvh - 9.8rem) / 2), 320px);
+    width: min(100%, calc((100dvh - 12.5rem) / 2), 320px);
     height: auto; min-height: 0;
   }
   .layout { align-items: start; }
