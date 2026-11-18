@@ -1,0 +1,177 @@
+# Breakthrough mode: Algo Trading.
+# Market, execution and quant/ML research problems meet the strategies,
+# validation methods and controls practitioners use against them.
+# File format: see README.md, "Make your own mode".
+id: algo-trading
+name: Algo Trading
+description: Market, execution and quant-research pitfalls meet trading strategies, validation methods and risk controls.
+solutionNoun: technique
+solutionNounPlural: techniques
+
+problems:
+  # --- research & modelling ---
+  - label: Overfitted alpha
+    note: Gorgeous backtest, nothing live.
+    bestFits: [Walk-forward test, Purged k-fold CV, Regularisation]
+  - label: Look-ahead bias
+    note: The backtest used data before it was available.
+    bestFits: [Point-in-time data, Walk-forward test]
+  - label: Survivorship bias
+    note: The universe only holds the names that survived.
+    bestFits: [Point-in-time data]
+  - label: Data snooping
+    note: Try enough ideas and one will look brilliant by luck.
+    bestFits: [Deflated Sharpe, Holdout set]
+  - label: Feature leakage
+    note: A feature quietly encodes the label.
+    bestFits: [Purged k-fold CV, Point-in-time data]
+  - label: Non-stationarity
+    note: The statistics of the series keep shifting.
+    bestFits: [Differencing, Walk-forward test, Regime filter]
+  - label: Regime change
+    note: The market stops behaving like your training data.
+    bestFits: [Regime filter, Ensembling]
+  - label: Alpha decay
+    note: The edge shrinks as others find it.
+    bestFits: [Ensembling, Walk-forward test]
+  - label: Model drift
+    note: Live predictions slowly degrade.
+    bestFits: [Walk-forward test, Ensembling]
+  - label: Noisy signal
+    note: The forecast barely beats a coin flip.
+    bestFits: [Ensembling, Regularisation]
+  - label: Range-bound chop
+    note: Prices whipsaw sideways and trend signals bleed.
+    bestFits: [Mean reversion, Regime filter]
+  - label: Missed trend
+    note: A sustained move happens without you.
+    bestFits: [Trend following, Momentum]
+  - label: ETF mispricing
+    note: The ETF drifts away from its basket's value.
+    bestFits: [Stat arb]
+  - label: Cash drag
+    note: Idle capital earns nothing.
+    bestFits: [Carry]
+  - label: Capacity limit
+    note: The strategy stops working at larger size.
+    bestFits: [Impact model, VWAP]
+  # --- execution ---
+  - label: Slippage
+    note: Fills land worse than the decision price.
+    bestFits: [Limit orders, VWAP, TWAP]
+  - label: Market impact
+    note: Your own order moves the price against you.
+    bestFits: [Iceberg orders, TWAP, Impact model]
+  - label: Signalling risk
+    note: Others spot your big order and trade ahead of it.
+    bestFits: [Iceberg orders, TWAP]
+  - label: Liquidity drought
+    note: The book is thin and size can't get done.
+    bestFits: [Smart order routing, Limit orders, TWAP]
+  - label: Fill-rate drop
+    note: Passive orders sit unfilled.
+    bestFits: [Smart order routing]
+  - label: Wide spreads
+    note: Crossing the spread eats the edge.
+    bestFits: [Limit orders, Market making]
+  - label: Stale quotes
+    note: Prices from a feed that quietly stopped updating.
+    bestFits: [Heartbeat monitor, Colocation]
+  - label: Latency spike
+    note: Order round-trips suddenly take far longer.
+    bestFits: [Colocation, Kill switch]
+  - label: Clock skew
+    note: Servers disagree on the time; event order is wrong.
+    bestFits: [Clock sync]
+  - label: Bad tick
+    note: A bogus print triggers a trade.
+    bestFits: [Tick filter]
+  - label: Fat-finger order
+    note: An extra zero on the size.
+    bestFits: [Pre-trade checks, Kill switch]
+  - label: Flash crash
+    note: Prices collapse and rebound within minutes.
+    bestFits: [Kill switch, Limit orders]
+  # --- risk & portfolio ---
+  - label: Crowded trade
+    note: Everyone holds the same position and heads for the same exit.
+    bestFits: [Diversification, Factor neutral]
+  - label: Factor exposure
+    note: The "alpha" is really just market or sector beta.
+    bestFits: [Factor neutral]
+  - label: Max drawdown
+    note: Peak-to-trough loss beyond what the mandate can take.
+    bestFits: [Stop-loss, Volatility targeting, Stress testing]
+  - label: Correlation break
+    note: Hedges stop hedging just when you need them.
+    bestFits: [Stress testing, Regime filter, Diversification]
+  - label: Concentrated risk
+    note: Most of the risk sits in one or two bets.
+    bestFits: [Risk parity, Diversification]
+  - label: Volatility spike
+    note: Realised vol doubles overnight.
+    bestFits: [Volatility targeting, Stop-loss]
+  - label: Oversized bets
+    note: Position sizes far beyond the edge.
+    bestFits: [Kelly sizing, Volatility targeting]
+  - label: Overnight gap
+    note: The market opens far from yesterday's close.
+    bestFits: [Flat by close, Volatility targeting]
+  - label: Borrow squeeze
+    note: Short borrow is recalled or fees jump.
+    bestFits: [Pre-borrow, Stop-loss]
+  - label: Inventory risk
+    note: The market maker is stuck holding a one-sided position.
+    bestFits: [Quote skewing, Stop-loss]
+  - label: Unhedged options
+    note: The book swings with every move in the underlying.
+    bestFits: [Delta hedge]
+  - label: Pair breakdown
+    note: The spread keeps widening; the relationship has broken.
+    bestFits: [Stop-loss, Regime filter]
+
+solutions:
+  # --- strategies ---
+  - { name: Mean reversion, tag: MRV, hint: "Bet that stretched prices revert toward a fair level." }
+  - { name: Momentum, tag: MOM, hint: "Buy recent winners and sell recent losers." }
+  - { name: Trend following, tag: TRF, hint: "Ride sustained moves with systematic entry and exit rules." }
+  - { name: Stat arb, tag: SAR, hint: "Trade many small, mean-reverting mispricings in a market-neutral book." }
+  - { name: Pairs trading, tag: PRS, hint: "Long one, short a cointegrated partner when their spread widens." }
+  - { name: Market making, tag: MMK, hint: "Quote both sides, earn the spread, manage the inventory." }
+  - { name: Carry, tag: CRY, hint: "Earn the yield or rate differential of holding one asset over another." }
+  - { name: Risk parity, tag: RPY, hint: "Weight assets so each contributes equal risk to the portfolio." }
+  - { name: Diversification, tag: DIV, hint: "Spread risk across bets that don't move together." }
+  # --- sizing & risk ---
+  - { name: Volatility targeting, tag: VOL, hint: "Scale positions to keep portfolio volatility near a target." }
+  - { name: Kelly sizing, tag: KLY, hint: "Size bets from edge and odds; in practice use half-Kelly or less." }
+  - { name: Factor neutral, tag: FNT, hint: "Hedge out exposure to market, sector and style factors." }
+  - { name: Delta hedge, tag: DLT, hint: "Offset an option book's sensitivity to the underlying's price." }
+  - { name: Stop-loss, tag: STP, hint: "Exit automatically when a position's loss hits a set limit." }
+  - { name: Stress testing, tag: STS, hint: "Replay historical and hypothetical shocks against the book." }
+  - { name: Flat by close, tag: FLT, hint: "Close intraday positions before the market shuts." }
+  - { name: Pre-borrow, tag: PBR, hint: "Secure stock borrow before shorting; watch utilisation and fees." }
+  - { name: Quote skewing, tag: SKW, hint: "Shade bid and ask to shed unwanted inventory." }
+  # --- execution ---
+  - { name: VWAP, tag: VWP, hint: "Trade along the day's volume profile to track volume-weighted average price." }
+  - { name: TWAP, tag: TWP, hint: "Slice a large order evenly over a time window." }
+  - { name: Iceberg orders, tag: ICE, hint: "Show a small visible size and refill it from hidden quantity." }
+  - { name: Limit orders, tag: LMT, hint: "Set the worst price you'll accept; never fill beyond it." }
+  - { name: Smart order routing, tag: SOR, hint: "Send each child order to the venue with the best price and liquidity." }
+  - { name: Impact model, tag: IMP, hint: "Estimate how your own trading moves the price before you size." }
+  # --- research & validation ---
+  - { name: Walk-forward test, tag: WFT, hint: "Fit on a rolling window, then test only on the period after it." }
+  - { name: Purged k-fold CV, tag: PKF, hint: "Cross-validate with purging and an embargo so labels can't leak between folds." }
+  - { name: Holdout set, tag: HLD, hint: "Keep untouched data for one final, honest test." }
+  - { name: Deflated Sharpe, tag: DSR, hint: "Discount the Sharpe ratio for the number of strategies tried." }
+  - { name: Point-in-time data, tag: PIT, hint: "Use data only as it was known on each date, delisted names included." }
+  - { name: Regularisation, tag: REG, hint: "Penalise model complexity to curb overfitting." }
+  - { name: Ensembling, tag: ENS, hint: "Combine diverse models to reduce variance." }
+  - { name: Differencing, tag: DIF, hint: "Model returns or (fractionally) differenced series, not raw prices." }
+  - { name: Regime filter, tag: RGF, hint: "Turn strategies on or off by the detected market regime." }
+  # --- controls & infrastructure ---
+  - { name: Kill switch, tag: KIL, hint: "One control that halts trading and cancels all open orders." }
+  - { name: Pre-trade checks, tag: PTC, hint: "Reject orders that breach price, size or position limits before they're sent." }
+  - { name: Tick filter, tag: TCK, hint: "Drop or flag prints that jump outside sane bounds." }
+  - { name: Heartbeat monitor, tag: HBT, hint: "Alert or halt when a feed or connection goes quiet." }
+  - { name: Colocation, tag: COL, hint: "Host servers in the exchange's data centre to cut latency." }
+  - { name: Clock sync, tag: CLK, hint: "Discipline every server to a precise time source (PTP or NTP)." }

@@ -33,6 +33,11 @@ const MIGRATIONS = [
    );
    CREATE INDEX scores_user ON scores(user_id, score DESC);
    CREATE INDEX scores_score ON scores(score DESC);`,
+  // v2: per-mode leaderboards. Games played before modes existed were TRIZ.
+  `ALTER TABLE scores ADD COLUMN mode TEXT NOT NULL DEFAULT 'innovation';
+   ALTER TABLE scores ADD COLUMN right_tools INTEGER NOT NULL DEFAULT 0;
+   CREATE INDEX scores_mode_user ON scores(mode, user_id, score DESC);
+   CREATE INDEX scores_mode_score ON scores(mode, score DESC);`,
 ];
 
 function migrate(db) {
@@ -50,4 +55,4 @@ function migrate(db) {
   }
 }
 
-module.exports = { openDb, DB_FILE };
+module.exports = { openDb, migrate, MIGRATIONS, DB_FILE };

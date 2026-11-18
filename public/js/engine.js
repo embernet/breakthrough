@@ -33,6 +33,7 @@
     problemBase: 100, // × level
     problemPerExtraGap: 30, // harder (wider) slots are worth more
     perfectMultiplier: 2,
+    rightToolMultiplier: 1.5, // the completing solution is one of the problem's bestFits
     comboStep: 50, // × (combo - 1) × level
   };
   // Breaking several problems with one piece multiplies the problem points.
@@ -137,7 +138,7 @@
 
   function normalisePrinciple(p) {
     const name = String(p.name || p.label || p);
-    const short = String(p.short || name.replace(/[^A-Za-z]/g, '').slice(0, 3)).toUpperCase().slice(0, 4);
+    const short = String(p.short || p.tag || name.replace(/[^A-Za-z]/g, '').slice(0, 3)).toUpperCase().slice(0, 4);
     return { name, short, hint: p.hint ? String(p.hint) : '' };
   }
 
@@ -155,12 +156,19 @@
     const rows = opts.rows || ROWS;
     const seed = opts.seed != null ? opts.seed : Math.floor(Math.random() * 2 ** 31);
     const problems = (opts.problems && opts.problems.length ? opts.problems : DEFAULT_PROBLEMS)
-      .map((p) => ({ label: String(p.label || p) }));
+      .map((p) => ({ label: String(p.label || p), bestFits: Array.isArray(p.bestFits) ? p.bestFits.map(String) : [] }));
     const principles = (opts.principles && opts.principles.length ? opts.principles : DEFAULT_PRINCIPLES)
       .map(normalisePrinciple);
 
     const g = {
       cols, rows, seed,
+      // shown in the report; modes rename "principle" (pattern, technique, ...)
+      meta: {
+        modeId: opts.modeId || null,
+        modeName: opts.modeName || null,
+        noun: opts.solutionNoun || 'principle',
+        nounPlural: opts.solutionNounPlural || (opts.solutionNoun ? opts.solutionNoun + 's' : 'principles'),
+      },
       rng: mulberry32(seed),
       grid: Array.from({ length: rows }, () => emptyRow(cols)),
       problemDeck: problems, problemBag: [],
@@ -172,10 +180,10 @@
       over: false, overReason: null,
       events: [],
       stats: {
-        solved: [], // {label, principle, perfect, level, points}
+        solved: [], // {label, principle, perfect, rightTool, level, points}
         principleUse: {}, // principles used to break problems
         piecePrinciples: {}, // every principle placed
-        bestCombo: 0, perfectFits: 0, solutionRows: 0,
+        bestCombo: 0, perfectFits: 0, rightTools: 0, solutionRows: 0,
         pieces: 0, problemsRisen: 0, elapsedMs: 0,
       },
     };
@@ -222,6 +230,11 @@
     let y = g.active.y;
     while (!collides(g, { ...g.active, y: y + 1 })) y++;
     return y;
+  }
+  /** Labels of problems in the well for which `name` is a best-fit solution. */
+  function rightToolFor(g, name) {
+    if (!name) return [];
+    return g.grid.filter((r) => r.problem && (r.problem.bestFits || []).includes(name)).map((r) => r.problem.label);
   }
   function stackHeight(g) {
     for (let y = 0; y < g.rows; y++) if (g.grid[y].cells.some(Boolean)) return g.rows - y;
@@ -294,7 +307,7 @@
     const top = g.grid[0];
     const row = emptyRow(g.cols);
     const id = g.nextProblemId++;
-    row.problem = { id, label: problem.label, gaps, bornLevel: g.level };
+    row.problem = { id, label: problem.label, gaps, bestFits: problem.bestFits || [], bornLevel: g.level };
     for (let x = 0; x < g.cols; x++) if (!gaps.includes(x)) row.cells[x] = { kind: 'problem', problemId: id };
     g.grid.shift();
     g.grid.push(row);
@@ -406,7 +419,8 @@
         // Perfect fit: this piece alone filled every gap of the problem, and
         // none of the piece is left over (all its cells cleared with it).
         const byPiece = row.problem.gaps.every((c) => row.cells[c] && row.cells[c].pieceId === p.id);
-        result.breaks.push({ label: row.problem.label, gaps: row.problem.gaps.length, perfect: byPiece && pieceAllCleared });
+        const rightTool = (row.problem.bestFits || []).includes(p.principle.name);
+        result.breaks.push({ label: row.problem.label, gaps: row.problem.gaps.length, perfect: byPiece && pieceAllCleared, rightTool, bestFits: row.problem.bestFits || [] });
       } else {
         result.solutionRows++;
       }
@@ -415,7 +429,8 @@
     const lvl = g.level;
     let problemPoints = 0;
     for (const b of result.breaks) {
-      b.points = (SCORE.problemBase + SCORE.problemPerExtraGap * (b.gaps - 1)) * lvl * (b.perfect ? SCORE.perfectMultiplier : 1);
+      b.points = Math.round((SCORE.problemBase + SCORE.problemPerExtraGap * (b.gaps - 1)) * lvl *
+        (b.perfect ? SCORE.perfectMultiplier : 1) * (b.rightTool ? SCORE.rightToolMultiplier : 1));
       problemPoints += b.points;
     }
     const nb = result.breaks.length;
@@ -442,10 +457,11 @@
 
     g.events.push({ type: 'clear', rows: cleared, solutionRows: result.solutionRows, points: result.points });
     for (const b of result.breaks) {
-      g.stats.solved.push({ label: b.label, principle: pn(p), perfect: b.perfect, level: lvl, points: b.points });
+      g.stats.solved.push({ label: b.label, principle: pn(p), perfect: b.perfect, rightTool: b.rightTool, level: lvl, points: b.points });
+      if (b.rightTool) g.stats.rightTools++;
       g.stats.principleUse[pn(p)] = (g.stats.principleUse[pn(p)] || 0) + 1;
       if (b.perfect) g.stats.perfectFits++;
-      g.events.push({ type: 'break', label: b.label, principle: pn(p), hint: p.principle.hint, perfect: b.perfect, points: b.points, combo: g.combo });
+      g.events.push({ type: 'break', label: b.label, principle: pn(p), hint: p.principle.hint, perfect: b.perfect, rightTool: b.rightTool, bestFits: b.bestFits, points: b.points, combo: g.combo });
     }
     if (result.solutionRows) {
       g.stats.solutionRows += result.solutionRows;
@@ -514,11 +530,13 @@
       level: g.level,
       problemsSolved: g.stats.solved.length,
       perfectFits: g.stats.perfectFits,
+      rightTools: g.stats.rightTools,
       bestCombo: g.stats.bestCombo,
       solutionRows: g.stats.solutionRows,
       pieces: g.stats.pieces,
       durationMs: Math.round(g.stats.elapsedMs),
       topPrinciple: top ? top.name : null,
+      mode: g.meta.modeId,
     };
   }
 
@@ -531,21 +549,23 @@
   function reportText(g, player) {
     const s = summary(g);
     const lines = [];
+    const m = g.meta || { noun: 'principle', nounPlural: 'principles' };
     lines.push('BREAKTHROUGH: Innovation report');
+    if (m.modeName) lines.push('Mode: ' + m.modeName);
     if (player) lines.push('Innovator: ' + player);
     lines.push('Score ' + s.score.toLocaleString('en-GB') + ' | Level ' + s.level + ' | ' + fmtDuration(s.durationMs));
-    lines.push('Problems solved: ' + s.problemsSolved + ' | Perfect fits: ' + s.perfectFits + ' | Best combo: x' + s.bestCombo);
+    lines.push('Problems solved: ' + s.problemsSolved + ' | Perfect fits: ' + s.perfectFits + ' | Right tool: ' + s.rightTools + ' | Best combo: x' + s.bestCombo);
     lines.push('');
     if (g.stats.solved.length) {
       lines.push('Problems solved:');
-      for (const x of g.stats.solved) lines.push('  - ' + x.label + ': solved with ' + x.principle + (x.perfect ? ' (perfect fit)' : ''));
+      for (const x of g.stats.solved) lines.push('  - ' + x.label + ': solved with ' + x.principle + (x.perfect ? ' (perfect fit)' : '') + (x.rightTool ? ' (right tool)' : ''));
     } else {
       lines.push('No problems solved this time. The problems won.');
     }
     const top = topPrinciples(g);
     if (top.length) {
       lines.push('');
-      lines.push('Most-used principles:');
+      lines.push('Most-used ' + m.nounPlural + ':');
       top.forEach((t, i) => lines.push('  ' + (i + 1) + '. ' + t.name + ' x' + t.count));
     }
     if (s.solutionRows) {
@@ -564,7 +584,8 @@
   function maxPlausibleScore(s) {
     const lvl = Math.max(1, s.level);
     const perPieceDrop = (ROWS + 2) * SCORE.hardDropCell;
-    const perProblem = (SCORE.problemBase + SCORE.problemPerExtraGap * 3) * lvl * SCORE.perfectMultiplier * MULTI_BREAK[4];
+    const perProblem = (SCORE.problemBase + SCORE.problemPerExtraGap * 3) * lvl * SCORE.perfectMultiplier *
+      SCORE.rightToolMultiplier * MULTI_BREAK[4];
     const perCombo = SCORE.comboStep * Math.max(0, s.bestCombo) * lvl;
     return s.pieces * perPieceDrop + s.problemsSolved * (perProblem + perCombo) + s.solutionRows * SCORE.solutionRow * lvl + 1000;
   }
@@ -572,7 +593,7 @@
   return {
     COLS, ROWS, SHAPES, TYPES, ROTATIONS, SCORE, PROBLEMS_PER_LEVEL, LOCK_DELAY_MS,
     createGame, update, move, rotate, softDrop, hardDrop, hold, lockPiece, insertProblemRow,
-    pieceCells, collides, ghostY, grounded, stackHeight, drainEvents, kicksFor,
+    pieceCells, collides, ghostY, grounded, stackHeight, rightToolFor, drainEvents, kicksFor,
     gravityMs, riseMs, levelFor, summary, reportText, topPrinciples, maxPlausibleScore, mulberry32,
   };
 });

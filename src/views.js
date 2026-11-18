@@ -5,8 +5,11 @@ function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function gamePage({ user, portalUrl, version }) {
+function gamePage({ user, portalUrl, version, modes = [], defaultMode = '', selectedMode = '' }) {
   const v = esc(version);
+  const current = modes.find((m) => m.id === (selectedMode || defaultMode)) || modes[0] || null;
+  const noun = current ? current.solutionNoun : 'principle';
+  const options = modes.map((m) => `<option value="${esc(m.id)}"${current && m.id === current.id ? ' selected' : ''}>${esc(m.name)}</option>`).join('');
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -18,8 +21,12 @@ function gamePage({ user, portalUrl, version }) {
 <link rel="icon" href="/favicon.svg">
 <link rel="stylesheet" href="/css/app.css?v=${v}">
 </head>
-<body class="game-body" data-display-name="${esc(user.displayName)}">
+<body class="game-body" data-display-name="${esc(user.displayName)}" data-default-mode="${esc(defaultMode)}" data-url-mode="${esc(selectedMode)}">
 <header class="topbar">
+  <label class="mode-pick" title="Game mode: which problems and solutions you play with">
+    <span class="mode-pick-label">Mode</span>
+    <select id="mode-select" aria-label="Game mode">${options}</select>
+  </label>
   ${portalUrl ? `<a class="portal-link" href="${esc(portalUrl)}">← Horizon</a>` : ''}
   <h1 class="brand">Break<span>through</span></h1>
   <p class="tagline">Problems rise. Solutions fall.</p>
@@ -54,10 +61,13 @@ function gamePage({ user, portalUrl, version }) {
     <div id="overlay" class="overlay">
       <div class="panel-card" id="ov-start">
         <h2 class="brand big">Break<span>through</span></h2>
+        <p class="mode-line"><span id="start-mode">${esc(current ? current.name : '')}</span></p>
+        <p id="start-desc" class="muted small">${esc(current ? current.description : '')}</p>
         <p class="lead">Problems rise from below. Drop solutions to fill their gaps and break them.</p>
         <ul class="howto">
-          <li><b class="sw problem"></b> <span>A full row with a <b>problem</b> breaks it, credited to the principle on the piece that finished it.</span></li>
+          <li><b class="sw problem"></b> <span>A full row with a <b>problem</b> breaks it, credited to the <span class="noun">${esc(noun)}</span> on the piece that finished it.</span></li>
           <li><b class="sw perfect"></b> <span><b>Perfect fit</b>: one piece fills the whole slot with nothing left over. Double points.</span></li>
+          <li><b class="sw right"></b> <span><b>Right tool</b> (×1.5): finish a problem with one of its best-fit <span class="noun-plural">${esc(current ? current.solutionNounPlural : 'principles')}</span>. Watch for ★.</span></li>
           <li><b class="sw solution"></b> <span>Rows of solutions alone are a <i>solution looking for a problem</i>: they clear, for small change.</span></li>
           <li><b class="sw none"></b> <span>Break problems back to back for combos. Let them pile up and you are <b>Overwhelmed</b>.</span></li>
         </ul>
@@ -70,20 +80,21 @@ function gamePage({ user, portalUrl, version }) {
         <button id="btn-resume" class="btn primary" type="button">Resume <kbd>P</kbd></button>
       </div>
       <div class="panel-card report" id="ov-over" hidden>
-        <p class="eyebrow">Overwhelmed</p>
+        <p class="eyebrow">Overwhelmed · <span id="r-mode"></span></p>
         <h2>Innovation report</h2>
         <div class="report-grid">
           <div class="big-stat"><span>Score</span><b id="r-score">0</b></div>
           <div class="big-stat"><span>Problems solved</span><b id="r-solved">0</b></div>
           <div class="big-stat"><span>Perfect fits</span><b id="r-perfect">0</b></div>
+          <div class="big-stat"><span>Right tool</span><b id="r-right">0</b></div>
           <div class="big-stat"><span>Best combo</span><b id="r-combo">0</b></div>
         </div>
         <p id="r-meta" class="muted"></p>
         <div class="report-cols">
           <section><h3>Problems solved</h3><ol id="r-list" class="solved-list"></ol></section>
-          <section><h3>Most-used principles</h3><ol id="r-principles" class="principle-list"></ol></section>
+          <section><h3>Most-used <span class="noun-plural">${esc(current ? current.solutionNounPlural : 'principles')}</span></h3><ol id="r-principles" class="principle-list"></ol></section>
         </div>
-        <section class="board"><h3>Leaderboard</h3><p id="r-submit" class="muted"></p><table id="r-board"><tbody></tbody></table></section>
+        <section class="board"><h3>Leaderboard · <span id="r-board-mode"></span></h3><p id="r-submit" class="muted"></p><table id="r-board"><tbody></tbody></table></section>
         <div class="actions">
           <button id="btn-copy" class="btn" type="button">Copy report</button>
           <button id="btn-again" class="btn primary" type="button">Play again <kbd>Enter</kbd></button>
@@ -101,11 +112,13 @@ function gamePage({ user, portalUrl, version }) {
       <h2>Rising next</h2>
       <div id="rise-label" class="rise-label">…</div>
       <div class="meter" aria-hidden="true"><div id="rise-bar"></div></div>
+      <p id="rise-fits" class="fits muted small"></p>
     </section>
     <section class="card principle-card">
       <h2>Falling now</h2>
       <div id="cur-name" class="pname big">–</div>
       <p id="cur-hint" class="muted small"></p>
+      <p id="cur-right" class="right-for small" hidden></p>
     </section>
   </aside>
 </main>

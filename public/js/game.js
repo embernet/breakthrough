@@ -119,7 +119,7 @@
   }
 
   // ---------------------------------------------------------------- state
-  let decks = null;
+  let content = null; // the active mode: {id, name, solutionNoun, problems, solutions, ...}
   let game = null;
   let mode = 'loading'; // start | play | pause | over
   let myBest = null;
@@ -238,7 +238,7 @@
           }
           break;
         }
-        case 'break': breaks.push(ev); break;
+        case 'break': breaks.push(ev); drawSide(true); break;
         case 'solutionRow':
           toast(`<span class="t-pts">+${ev.points}</span><b>Solution looking for a problem</b><span class="t-hint">${ev.count > 1 ? ev.count + ' rows' : 'A row'} of solutions, no problem solved.</span>`, 'minor', 2.2);
           if (!breaksIn(evs)) sound.blip(392, 0.1, 'triangle', 0.04);
@@ -246,6 +246,7 @@
         case 'combo': break;
         case 'rise':
           fx.rise = 1;
+          drawSide(true);
           sound.blip(80, 0.18, 'sine', 0.09, 0, 0.7);
           break;
         case 'levelUp':
@@ -264,11 +265,13 @@
     const anyPerfect = breaks.some((b) => b.perfect);
     const combo = breaks[breaks.length - 1].combo;
     for (const b of breaks) {
-      const badges = (b.perfect ? '<span class="badge">PERFECT FIT ×2</span>' : '') + (combo >= 2 ? `<span class="badge combo">COMBO ×${combo}</span>` : '');
+      const badges = (b.perfect ? '<span class="badge">PERFECT FIT ×2</span>' : '') +
+        (b.rightTool ? '<span class="badge right">RIGHT TOOL ×1.5</span>' : '') + (combo >= 2 ? `<span class="badge combo">COMBO ×${combo}</span>` : '');
       toast(`<span class="t-pts">+${b.points.toLocaleString()}</span><b>${esc(b.label)}</b>solved with <strong>${esc(b.principle)}</strong>${badges}${b.hint ? `<div class="t-hint">${esc(b.hint)}</div>` : ''}`, b.perfect ? 'perfect' : '', b.perfect ? 3.8 : 3.2);
     }
     const clear = evs.find((e) => e.type === 'clear');
     const rows = clear ? clear.rows.filter((r) => r.problem) : [];
+    if (breaks.some((b) => b.rightTool) && !anyPerfect) banner(breaks.length > 1 ? 'Right tools!' : 'Right tool!', 'level');
     if (anyPerfect) {
       fx.shake = Math.max(fx.shake, 9);
       for (const r of rows) {
@@ -445,10 +448,21 @@
         }
       }
     }
-    if (row.problem) drawProblemLabel(g, row, y, pc);
+    if (row.problem) {
+      const right = game.active && mode === 'play' && (row.problem.bestFits || []).includes(game.active.principle.name);
+      if (right) {
+        const pulse = 0.55 + 0.45 * Math.sin(performance.now() / 160);
+        g.save();
+        g.strokeStyle = `rgba(31,181,122,${0.55 + 0.4 * pulse})`;
+        g.lineWidth = Math.max(2, cell * 0.09);
+        g.beginPath(); g.roundRect(1, y * cell + 1, COLS * cell - 2, cell - 2, cell * 0.2); g.stroke();
+        g.restore();
+      }
+      drawProblemLabel(g, row, y, pc, right);
+    }
   }
 
-  function drawProblemLabel(g, row, y, pc) {
+  function drawProblemLabel(g, row, y, pc, right) {
     // label goes on the longest run of problem cells
     let best = [0, 0], start = -1;
     for (let x = 0; x <= COLS; x++) {
@@ -456,7 +470,7 @@
       if (isP && start < 0) start = x;
       if (!isP && start >= 0) { if (x - start > best[1] - best[0]) best = [start, x]; start = -1; }
     }
-    const text = row.problem.label;
+    const text = (right ? '★ ' : '') + row.problem.label;
     let run = (best[1] - best[0]) * cell - cell * 0.3;
     let cx = ((best[0] + best[1]) / 2) * cell;
     let size = Math.min(cell * 0.5, 15);
@@ -578,6 +592,12 @@
     const cur = game.active;
     setText('cur-name', cur ? cur.principle.name : '–');
     setText('cur-hint', cur ? cur.principle.hint : '');
+    const fits = up && up.bestFits && up.bestFits.length ? 'Best fits: ' + up.bestFits.join(', ') : '';
+    setText('rise-fits', fits);
+    const rightFor = cur ? [...new Set(E.rightToolFor(game, cur.principle.name))] : [];
+    const rf = $('cur-right');
+    rf.hidden = !rightFor.length;
+    setText('cur-right', rightFor.length ? '★ Right tool for: ' + rightFor.join(', ') : '');
   }
 
   // ---------------------------------------------------------------- input
@@ -630,6 +650,10 @@
   };
   document.addEventListener('keydown', (e) => {
     if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName) && e.target.id !== 'copy-buffer') return;
+    if (e.target && e.target.tagName === 'SELECT') {
+      if (mode !== 'play') return; // browsing the mode list
+      e.target.blur(); // mid-game: arrows steer the piece, not the dropdown
+    }
     if (e.code === 'KeyP' || e.code === 'Escape') { e.preventDefault(); togglePause(); return; }
     if (e.code === 'KeyM') { setSound(!sound.on); return; }
     if (e.code === 'Enter' || e.code === 'NumpadEnter') {
@@ -678,8 +702,12 @@
   }
   function newGame() {
     game = E.createGame({
-      problems: decks ? decks.problems.items : undefined,
-      principles: decks ? decks.principles.items : undefined,
+      problems: content ? content.problems : undefined,
+      principles: content ? content.solutions : undefined,
+      modeId: content ? content.id : null,
+      modeName: content ? content.name : null,
+      solutionNoun: content ? content.solutionNoun : undefined,
+      solutionNounPlural: content ? content.solutionNounPlural : undefined,
     });
     fx.particles.length = fx.popups.length = fx.flashes.length = 0;
     $('toasts').innerHTML = '';
@@ -734,6 +762,9 @@
     $('r-solved').textContent = s.problemsSolved;
     $('r-perfect').textContent = s.perfectFits;
     $('r-combo').textContent = s.bestCombo ? '×' + s.bestCombo : '–';
+    $('r-right').textContent = s.rightTools;
+    $('r-mode').textContent = g.meta.modeName || '';
+    $('r-board-mode').textContent = g.meta.modeName || '';
     const mins = Math.floor(s.durationMs / 60000), secs = Math.round(s.durationMs / 1000) % 60;
     $('r-meta').textContent = `Level ${s.level} · ${mins}m ${String(secs).padStart(2, '0')}s · ${s.pieces} solutions placed` +
       (s.solutionRows ? ` · ${s.solutionRows} solution${s.solutionRows === 1 ? '' : 's'} looking for a problem` : '');
@@ -742,7 +773,7 @@
     if (!g.stats.solved.length) list.innerHTML = '<li class="muted">None this time. The problems won.</li>';
     for (const x of g.stats.solved) {
       const li = document.createElement('li');
-      li.innerHTML = `<b>${esc(x.label)}</b>, with ${esc(x.principle)}${x.perfect ? '<span class="pf">PERFECT</span>' : ''}`;
+      li.innerHTML = `<b>${esc(x.label)}</b>, with ${esc(x.principle)}${x.perfect ? '<span class="pf">PERFECT</span>' : ''}${x.rightTool ? '<span class="rt">RIGHT TOOL</span>' : ''}`;
       list.appendChild(li);
     }
     const pl = $('r-principles');
@@ -780,7 +811,7 @@
 
   async function loadBoard() {
     try {
-      const r = await fetch('/api/scores', { credentials: 'same-origin' });
+      const r = await fetch('/api/scores?mode=' + encodeURIComponent(content ? content.id : ''), { credentials: 'same-origin' });
       if (!r.ok) return null;
       const data = await r.json();
       myBest = data.me;
@@ -846,6 +877,81 @@
   }
 
   // ---------------------------------------------------------------- boot
+  // ---------------------------------------------------------------- modes
+  const select = $('mode-select');
+  const modeIds = () => [...select.options].map((o) => o.value);
+
+  /** ?mode=<id> wins, then the viewer's last choice, then the server default. */
+  function initialModeId() {
+    const ids = modeIds();
+    const fromUrl = new URLSearchParams(location.search).get('mode');
+    if (fromUrl && ids.includes(fromUrl)) return fromUrl;
+    const saved = store.get('mode', null);
+    if (saved && ids.includes(saved)) return saved;
+    const def = document.body.dataset.defaultMode;
+    return ids.includes(def) ? def : ids[0] || null;
+  }
+
+  async function fetchMode(id) {
+    const r = await fetch('/api/modes/' + encodeURIComponent(id), { credentials: 'same-origin' });
+    if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname + location.search); return null; }
+    if (!r.ok) throw new Error('mode ' + id + ': ' + r.status);
+    return r.json();
+  }
+
+  function applyModeText() {
+    const c = content;
+    const noun = c ? c.solutionNoun : 'principle';
+    const plural = c ? c.solutionNounPlural : 'principles';
+    document.querySelectorAll('.noun').forEach((el) => { el.textContent = noun; });
+    document.querySelectorAll('.noun-plural').forEach((el) => { el.textContent = plural; });
+    $('start-mode').textContent = c ? c.name : '';
+    $('start-desc').textContent = c ? c.description : '';
+    document.title = c ? `Breakthrough · ${c.name}` : 'Breakthrough';
+  }
+
+  /** Load a mode and show its start card with a fresh board. */
+  async function useMode(id) {
+    try {
+      content = await fetchMode(id);
+      if (!content) return;
+    } catch {
+      content = null; // the engine's tiny built-in deck still plays
+    }
+    if (content) {
+      select.value = content.id;
+      store.set('mode', content.id);
+      // keep a shared ?mode= link in step with the dropdown
+      const url = new URL(location.href);
+      if (url.searchParams.has('mode')) { url.searchParams.set('mode', content.id); history.replaceState(null, '', url); }
+    }
+    applyModeText();
+    myBest = null;
+    newGame(); // a board to look at behind the start card
+    mode = 'start';
+    showOverlay('ov-start');
+    drawSide(true);
+    loadBoard().then(() => drawSide(false));
+  }
+
+  select.addEventListener('change', async () => {
+    const want = select.value;
+    const prev = content ? content.id : null;
+    if (want === prev) return;
+    const inProgress = game && !game.over && (mode === 'play' || mode === 'pause');
+    if (inProgress) {
+      pause();
+      const name = select.options[select.selectedIndex].textContent;
+      if (!window.confirm(`Switch to ${name}? This ends your current game.`)) {
+        if (prev) select.value = prev;
+        return;
+      }
+    }
+    select.blur(); // arrow keys belong to the game again
+    await useMode(want);
+  });
+
+  // ---------------------------------------------------------------- boot
   async function boot() {
     readTheme();
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readTheme(); drawSide(true); });
@@ -858,15 +964,9 @@
     $('btn-resume').addEventListener('click', resume);
     $('btn-again').addEventListener('click', startGame);
     $('btn-copy').addEventListener('click', copyReport);
-    try {
-      const r = await fetch('/api/decks', { credentials: 'same-origin' });
-      if (r.status === 401) { location.href = '/login?next=/'; return; }
-      decks = await r.json();
-    } catch { decks = null; /* the engine has small built-in decks */ }
-    loadBoard().then(() => drawSide(false));
-    newGame(); // a board to look at behind the start card
-    mode = 'start';
-    showOverlay('ov-start');
+    const id = initialModeId();
+    if (id) await useMode(id);
+    else { applyModeText(); newGame(); mode = 'start'; showOverlay('ov-start'); }
     resize();
     requestAnimationFrame(frame);
   }

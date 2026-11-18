@@ -1,0 +1,182 @@
+# Breakthrough mode: Software Engineering & Architecture (the default).
+# File format: see README.md, "Make your own mode".
+id: software-engineering
+name: Software Engineering
+description: Tech debt, scaling and reliability problems meet design patterns and architecture techniques.
+solutionNoun: pattern
+solutionNounPlural: patterns
+
+problems:
+  - label: N+1 queries
+    note: Every row in a list triggers another query.
+    bestFits: [Batching, Denormalisation, Caching]
+  - label: God class
+    note: One class knows and does everything.
+    bestFits: [Extract class, Strategy, Modularisation]
+  - label: Memory leak
+    note: Usage climbs until the process falls over.
+    bestFits: [Profiling, Bounded buffers]
+  - label: Hot partition
+    note: One shard takes most of the traffic.
+    bestFits: [Key salting, Caching]
+  - label: Cache stampede
+    note: A hot key expires and every request hits the database.
+    bestFits: [Request coalescing, Jittered TTLs]
+  - label: Flaky tests
+    note: Pass, fail, pass, with no code change.
+    bestFits: [Hermetic tests, Dependency injection]
+  - label: Tight coupling
+    note: Change one thing, break five others.
+    bestFits: [Dependency injection, Message queue, Observer]
+  - label: Slow builds
+    note: Every change waits on a full rebuild.
+    bestFits: [Incremental builds, Modularisation]
+  - label: Thundering herd
+    note: Every client retries at the same moment.
+    bestFits: [Retry with backoff, Rate limiting]
+  - label: Lock contention
+    note: Threads queue up for the same lock.
+    bestFits: [Optimistic locking, Sharding]
+  - label: Cascading failure
+    note: One slow dependency takes the rest down with it.
+    bestFits: [Circuit breaker, Bulkhead, Timeouts]
+  - label: Config drift
+    note: Environments quietly diverge from each other.
+    bestFits: [Infra as code]
+  - label: Chatty services
+    note: Dozens of tiny calls per user request.
+    bestFits: [API gateway, Batching, Facade]
+  - label: Big ball of mud
+    note: No structure anyone can explain.
+    bestFits: [Modularisation, Strangler fig]
+  - label: Single point fail
+    note: One box goes down and everything goes down.
+    bestFits: [Redundancy, Load balancing, Health checks]
+  - label: Unbounded queue
+    note: Work arrives faster than it drains, forever.
+    bestFits: [Backpressure, Bounded buffers, Load shedding]
+  - label: Schema lock-in
+    note: The schema can't change without downtime.
+    bestFits: [Expand/contract]
+  - label: Slow queries
+    note: The hot query scans the whole table.
+    bestFits: [Indexing, Caching, Denormalisation]
+  - label: Read-heavy primary
+    note: Reads swamp the primary database.
+    bestFits: [Read replicas, Caching, CQRS]
+  - label: Write bottleneck
+    note: One database node takes every write.
+    bestFits: [Sharding, Batching, Message queue]
+  - label: Blocking I/O
+    note: Threads sit idle waiting on the network.
+    bestFits: [Async I/O, Connection pooling]
+  - label: Connection storm
+    note: Every request opens a fresh database connection.
+    bestFits: [Connection pooling]
+  - label: Duplicate charges
+    note: A retried payment is applied twice.
+    bestFits: [Idempotency keys]
+  - label: Traffic spikes
+    note: Sudden load overwhelms fixed capacity.
+    bestFits: [Autoscaling, Rate limiting, Load shedding]
+  - label: Noisy neighbour
+    note: One tenant starves everyone else.
+    bestFits: [Bulkhead, Rate limiting]
+  - label: Risky deploys
+    note: Every release is all-or-nothing.
+    bestFits: [Feature flags]
+  - label: Legacy monolith
+    note: Too big to rewrite, too risky to touch.
+    bestFits: [Strangler fig, Modularisation, Facade]
+  - label: Vendor lock-in
+    note: Your code speaks one vendor's API everywhere.
+    bestFits: [Adapter, Facade, Dependency injection]
+  - label: Lost updates
+    note: Concurrent writes silently overwrite each other.
+    bestFits: [Optimistic locking, Event sourcing]
+  - label: Poison message
+    note: One bad message blocks the whole queue.
+    bestFits: [Dead-letter queue]
+  - label: Mystery latency
+    note: It's slow, but nobody knows where.
+    bestFits: [Distributed tracing, Profiling]
+  - label: Audit gaps
+    note: Nobody can tell who changed what, or when.
+    bestFits: [Event sourcing]
+  - label: Polling overload
+    note: Clients poll constantly to see if anything changed.
+    bestFits: [Observer, Message queue]
+  - label: Breaking changes
+    note: Consumers break on every API release.
+    bestFits: [Contract tests, Adapter]
+  - label: Shotgun surgery
+    note: One change touches dozens of files.
+    bestFits: [Modularisation, Extract class]
+  - label: Switch sprawl
+    note: The same if/else chain in ten places.
+    bestFits: [Strategy]
+  - label: Zombie instances
+    note: Dead nodes still receive traffic.
+    bestFits: [Health checks, Load balancing]
+  - label: Partial outage
+    note: One broken feature takes the whole page down.
+    bestFits: [Graceful degradation, Bulkhead, Circuit breaker]
+  - label: Slow reports
+    note: Analytics queries run against the live database.
+    bestFits: [CQRS, Read replicas, Denormalisation]
+  - label: Cross-cutting mess
+    note: Logging and auth code copied into every handler.
+    bestFits: [Decorator, API gateway]
+  - label: Tech debt
+    note: Yesterday's shortcuts, with interest.
+    bestFits: [Strangler fig, Extract class]
+
+solutions:
+  - { name: Strategy, tag: STR, hint: "Swap interchangeable algorithms behind one interface." }
+  - { name: Observer, tag: OBS, hint: "Let dependents subscribe to changes instead of polling." }
+  - { name: Adapter, tag: ADP, hint: "Wrap an incompatible interface so it fits the one you need." }
+  - { name: Facade, tag: FAC, hint: "Put one simple interface in front of a messy subsystem." }
+  - { name: Decorator, tag: DEC, hint: "Add behaviour by wrapping an object, not editing it." }
+  - { name: Dependency injection, tag: DI, hint: "Pass collaborators in instead of constructing them inside." }
+  - { name: Extract class, tag: EXC, hint: "Pull one cohesive responsibility out into its own class." }
+  - { name: Modularisation, tag: MOD, hint: "Split into cohesive modules with explicit boundaries." }
+  - { name: Strangler fig, tag: STF, hint: "Replace a legacy system piece by piece behind a router." }
+  - { name: CQRS, tag: CQR, hint: "Separate the write model from read-optimised models." }
+  - { name: Event sourcing, tag: EVS, hint: "Store every change as an event; rebuild state by replaying them." }
+  - { name: Circuit breaker, tag: CBR, hint: "Stop calling a failing dependency; fail fast and probe for recovery." }
+  - { name: Bulkhead, tag: BLK, hint: "Isolate resource pools so one failure can't sink everything." }
+  - { name: Timeouts, tag: TMO, hint: "Bound every remote call; never wait forever." }
+  - { name: Retry with backoff, tag: RTY, hint: "Retry transient failures with growing, jittered delays." }
+  - { name: Graceful degradation, tag: GRD, hint: "Drop optional features to keep the core working." }
+  - { name: Load shedding, tag: LSH, hint: "Reject excess work early to protect latency for the rest." }
+  - { name: Backpressure, tag: BKP, hint: "Make fast producers slow down to what consumers can handle." }
+  - { name: Bounded buffers, tag: BND, hint: "Give every queue and cache a hard size limit." }
+  - { name: Rate limiting, tag: RTL, hint: "Cap request rates per client to protect shared capacity." }
+  - { name: Sharding, tag: SHD, hint: "Split data across nodes by key to scale writes." }
+  - { name: Key salting, tag: SLT, hint: "Add a random suffix to hot keys to spread them across partitions." }
+  - { name: Read replicas, tag: RRP, hint: "Serve reads from copies to take load off the primary." }
+  - { name: Caching, tag: CCH, hint: "Keep hot results close to the caller; mind invalidation and TTLs." }
+  - { name: Request coalescing, tag: RQC, hint: "Collapse concurrent identical requests into a single fetch." }
+  - { name: Jittered TTLs, tag: JIT, hint: "Randomise cache expiry so keys don't all expire at once." }
+  - { name: Indexing, tag: IDX, hint: "Index the columns your hot queries filter and sort on." }
+  - { name: Denormalisation, tag: DNM, hint: "Duplicate data to avoid expensive joins on hot reads." }
+  - { name: Batching, tag: BAT, hint: "Group many small operations into fewer large ones." }
+  - { name: Connection pooling, tag: CPL, hint: "Reuse a bounded set of open connections." }
+  - { name: Async I/O, tag: AIO, hint: "Don't block threads while waiting on network or disk." }
+  - { name: Message queue, tag: MSQ, hint: "Decouple producers from consumers with a durable buffer." }
+  - { name: Dead-letter queue, tag: DLQ, hint: "Park messages that keep failing so the rest keep flowing." }
+  - { name: Idempotency keys, tag: IDK, hint: "Make retries safe: the same request takes effect once." }
+  - { name: Optimistic locking, tag: OPL, hint: "Detect conflicting writes with version checks instead of locks." }
+  - { name: Expand/contract, tag: EXP, hint: "Change schemas in backward-compatible steps: add, migrate, remove." }
+  - { name: Feature flags, tag: FLG, hint: "Ship dark, switch on at runtime, roll back without a deploy." }
+  - { name: Load balancing, tag: LBL, hint: "Spread traffic across healthy instances." }
+  - { name: Health checks, tag: HCK, hint: "Probe instances and route traffic away from unhealthy ones." }
+  - { name: Redundancy, tag: RED, hint: "Run spares in separate failure domains." }
+  - { name: Autoscaling, tag: AUT, hint: "Add and remove capacity automatically as load changes." }
+  - { name: API gateway, tag: GWY, hint: "One entry point for routing, auth and request aggregation." }
+  - { name: Infra as code, tag: IAC, hint: "Declare environments in versioned code; never hand-edit servers." }
+  - { name: Contract tests, tag: CTR, hint: "Check each service against what its consumers actually expect." }
+  - { name: Hermetic tests, tag: HRM, hint: "Tests that own their inputs: no shared state, real clock or network." }
+  - { name: Incremental builds, tag: INC, hint: "Cache build outputs and rebuild only what changed." }
+  - { name: Profiling, tag: PRF, hint: "Measure where time and memory go before optimising." }
+  - { name: Distributed tracing, tag: TRC, hint: "Follow one request across services to find the slow hop." }

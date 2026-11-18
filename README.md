@@ -2,12 +2,24 @@
 
 **Problems rise. Solutions fall.** A falling-block puzzle for the Horizon suite.
 
-Problem rows (e.g. *Data silos*) rise from the bottom of a 10×20 well, each with a
-slot of 1–4 gaps. You steer four-cell solution pieces, each carrying an innovation
-principle (the 40 TRIZ principles: Segmentation, Merging, Do it in reverse, …).
+Problem rows (e.g. *Cache stampede*) rise from the bottom of a 10×20 well, each with a
+slot of 1–4 gaps. You steer four-cell solution pieces, each carrying a solution
+(e.g. *Circuit breaker*). What the problems and solutions are depends on the
+**mode**, picked from the dropdown at the top left:
+
+| Mode | Problems | Solutions ("noun") |
+|---|---|---|
+| **Software Engineering** (default) | tech debt, scaling, reliability, design smells | design patterns and architecture techniques ("pattern") |
+| **Algo Trading** | market, execution and quant/ML research pitfalls | strategies, validation methods and risk controls ("technique") |
+| **General innovation (TRIZ)** | everyday organisation/tech problems | the 40 TRIZ inventive principles ("principle") |
 
 - Complete a row holding a problem and you **break** it. The card reads
-  "Data silos, solved with Merging", credited to the piece that completed the row.
+  "Cache stampede, solved with Request coalescing", credited to the piece that
+  completed the row.
+- **Right tool** (×1.5): each problem can list 1–3 best-fit solutions. Finish it
+  with one of those and the points get a bonus that stacks with Perfect fit. A ★
+  on the row and a "Right tool for…" line show when the falling piece is a match,
+  and the "Rising next" card shows the next problem's best fits.
 - **Perfect fit** (×2): that one piece filled every gap of the problem *and* none
   of it is left over (all its cells cleared). A 4-gap slot with an I piece, or a
   stacked T/L/J/O-shaped pocket across two problem rows.
@@ -15,7 +27,11 @@ principle (the 40 TRIZ principles: Segmentation, Merging, Do it in reverse, …)
 - Break problems on consecutive pieces for **combos**. Every 5 problems is a new
   level: pieces fall faster and problems rise more often.
 - The stack pushed out of the top, or no room to enter: **Overwhelmed**. The
-  end screen is an **Innovation report** (copyable as plain text) plus the leaderboard.
+  end screen is an **Innovation report** (copyable as plain text) plus that mode's
+  leaderboard. Scores and leaderboards are per mode.
+
+The dropdown starts a fresh game (it asks first if one is in progress). Your
+choice is remembered in the browser; `/?mode=algo-trading` links straight to a mode.
 
 Controls: ←/→ or A/D move · ↑/W/X rotate · Z/Q rotate back · ↓/S soft drop ·
 Space hard drop · C/Shift park the idea (hold) · P/Esc pause · M sound.
@@ -52,7 +68,8 @@ Read from the environment by `src/config.js` (compose passes these from `.env`):
 | Variable | Default | Meaning |
 |---|---|---|
 | `PORT` | `8195` | Listen port (compose sets it from `BREAKTHROUGH_PORT`) |
-| `DATA_DIR` | `./data` (`/data` in the container) | SQLite DB `breakthrough.db`, optional `decks/` |
+| `DATA_DIR` | `./data` (`/data` in the container) | SQLite DB `breakthrough.db`, optional `modes/` |
+| `DEFAULT_MODE` | `software-engineering` | Mode shown first and used when the viewer hasn't picked one (falls back to `software-engineering` if that id isn't loaded) |
 | `PUBLIC_URL` | none | Public base URL (SSO redirect URI `<PUBLIC_URL>/auth/callback`; `https` makes cookies `Secure`) |
 | `PORTAL_URL` | none | Shows a "← Horizon" link in the header |
 | `TRUST_PROXY` | none | Express `trust proxy` value when behind the reverse proxy |
@@ -62,31 +79,50 @@ Compose-level: `COMPOSE_PROJECT_NAME`, `BREAKTHROUGH_PORT`, `BREAKTHROUGH_DATA_D
 `BREAKTHROUGH_BACKUP_DIR`. Prod values are in the `.env.example` comments. Ports,
 URLs and paths are recorded in `~/git/horizon-infra/inventory.md`.
 
-## Decks
+## Modes
 
-`decks/problems.yaml` (about 40 generic organisation/tech problems) and
-`decks/principles.yaml` (the 40 TRIZ principles, each with a 3-letter tag and a
-one-line hint). Labels are capped at 18 characters so they fit on the blocks;
-longer ones are trimmed.
+Each mode is **one YAML file**. The built-in ones are in `modes/`:
+`software-engineering.yaml`, `algo-trading.yaml`, `innovation.yaml`.
 
-To run a workshop with your own problems, put a file with the same name in
-`DATA_DIR/decks/` (e.g. `data/decks/problems.yaml` in dev). It is re-read on each
-game start, so no restart is needed. A broken override is logged and the default
-deck is used instead.
+Files in `DATA_DIR/modes/` (e.g. `data/modes/` in dev) **add** modes, or **replace**
+a built-in one that has the same `id`. They are re-checked on every request, so
+a new or edited file shows up on the next page load, with no restart. Every file is
+validated on load. A file with any error is **skipped** and the reasons are logged
+(`docker compose logs`), e.g.
+`modes: skipping DATA_DIR/modes/q3.yaml: 2 problems: problems[4] "Very long label here": label is 20 characters (max 18) ...`.
+A bad file never stops the app or the other modes.
 
-```yaml
-name: Our Q3 problems
-problems:
-  - Slow onboarding            # plain strings work
-  - label: Data silos          # or objects with an optional note
-    note: Teams can't see each other's data.
-```
+### Make your own mode
+
+Copy a built-in file into `data/modes/`, change the `id`, and edit:
 
 ```yaml
-name: TRIZ inventive principles
-principles:
-  - { name: Segmentation, short: SEG, hint: "Divide it into independent parts." }
+id: our-q3                 # required; lower-case letters, digits, dashes. Same id as a built-in = replace it
+name: Our Q3 problems      # required; shown in the dropdown (max 40)
+description: A warm-up for the planning workshop.   # optional, shown on the start card
+solutionNoun: idea         # optional: what a solution is called ("pattern", "technique", ...). Default "solution"
+solutionNounPlural: ideas  # optional; default noun + "s"
+
+problems:                  # required, at least 5
+  - label: Slow onboarding # required, max 18 characters (it is drawn on a 10-cell row)
+    note: New starters take a month to ship.   # optional, max 140
+    bestFits: [Buddy system, Golden path]       # optional, 1-3 names from `solutions` below
+  - Silos                  # a plain string works too (label only)
+
+solutions:                 # required, at least 5
+  - name: Buddy system     # required, max 20 characters (drawn on the falling piece), unique
+    tag: BUD               # required, 2-4 letters/digits, drawn on settled blocks
+    hint: Pair each new starter with an old hand.  # required, one line (max 140)
+  - { name: Golden path, tag: GLD, hint: "One paved, documented way to ship." }
 ```
+
+Rules the validator enforces: the required fields above; the length limits; no
+duplicate problem labels or solution names (case-insensitive); every `bestFits`
+name must be one of this file's solutions (matched case-insensitively). Quote any
+hint that contains a `:` or `#`. Unknown keys are ignored.
+
+To make it the default for everyone, set `DEFAULT_MODE=our-q3` in `.env` and
+recreate the container.
 
 ## Routes
 
@@ -94,12 +130,14 @@ principles:
 |---|---|---|
 | `/` | user | The game |
 | `/healthz` | open | `{"ok":true,...}` (used by `promote.sh` and the Docker healthcheck) |
-| `/api/decks` | user | Active problem + principle decks |
-| `/api/scores` | user | `GET`: top 20 (best game per player) + `me` (your best and rank). `POST`: a finished game |
+| `/api/modes` | user | `{default, modes: [{id, name, description, ...}]}` |
+| `/api/modes/:id` | user | One mode: problems (with `bestFits`) and solutions. `/api/decks?mode=<id>` is an alias |
+| `/api/scores?mode=<id>` | user | `GET`: that mode's top 20 (best game per player) + `me` (your best and rank). `POST`: a finished game |
 | `/login`, `/local`, `/auth/callback`, `/logout` | – | From the auth module |
 
-`POST /api/scores` takes JSON `{score, level, problemsSolved, perfectFits, bestCombo,
-solutionRows, pieces, durationMs, topPrinciple}`. It is sanity-checked server-side:
+`POST /api/scores` takes JSON `{mode, score, level, problemsSolved, perfectFits, rightTools,
+bestCombo, solutionRows, pieces, durationMs, topPrinciple}` (`mode` must be a loaded
+mode id; missing means the default). It is sanity-checked server-side:
 non-negative integers within bounds, consistent counts, a level that matches
 problems solved, and a score under a generous ceiling computed from the engine's
 own scoring rules (`maxPlausibleScore`). There is also a 2-second per-user flood
@@ -128,14 +166,14 @@ src/server.js        Express app (createApp) + listener
 src/config.js        env -> config
 src/db.js            node:sqlite, migrations (PRAGMA user_version)
 src/scores.js        submission validation + leaderboard queries
-src/decks.js         YAML deck loading (default + DATA_DIR override)
+src/modes.js         mode files: loading, validation, DATA_DIR overrides
 src/views.js         HTML shell for the game page
 src/auth/            shared Horizon login module (copied from the horizon repo)
 public/js/engine.js  pure game logic, no DOM (browser global + require())
 public/js/game.js    canvas renderer, effects, input, sound, UI
 public/css/app.css   styles (light/dark via prefers-color-scheme)
-decks/*.yaml         default decks
-test/                node --test: engine rules + HTTP API
+modes/*.yaml         built-in modes (one file each)
+test/                node --test: engine rules, mode files, HTTP API
 scripts/promote.sh   prod release: backup, checkout tag, rebuild, health-check
 ```
 

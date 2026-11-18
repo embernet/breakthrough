@@ -90,27 +90,99 @@ test('game page shows the player and the Horizon link', async () => {
   assert.match(r.headers.get('content-security-policy'), /default-src 'self'/);
 });
 
-test('decks load with short labels', async () => {
-  const cookie = await login('Deck Reader');
-  const d = await (await fetch(base + '/api/decks', { headers: { cookie } })).json();
-  assert.ok(d.problems.items.length >= 40);
-  assert.ok(d.problems.items.every((p) => p.label.length <= 18));
-  assert.ok(d.principles.items.length >= 40);
-  assert.ok(d.principles.items.every((p) => p.name.length <= 18 && p.hint && p.short));
-  assert.ok(d.principles.items.some((p) => p.name === 'Do it in reverse'));
+test('game page has the mode dropdown, default first, honours ?mode=', async () => {
+  const cookie = await login('Mode Picker');
+  let html = await (await fetch(base + '/', { headers: { cookie } })).text();
+  assert.match(html, /<select id="mode-select"[^>]*><option value="software-engineering" selected>Software Engineering<\/option>/);
+  assert.match(html, /<option value="algo-trading">Algo Trading<\/option>/);
+  assert.match(html, /<option value="innovation">General innovation \(TRIZ\)<\/option>/);
+  assert.match(html, /data-default-mode="software-engineering"/);
+  assert.match(html, /credited to the <span class="noun">pattern<\/span>/);
+  html = await (await fetch(base + '/?mode=algo-trading', { headers: { cookie } })).text();
+  assert.match(html, /<option value="algo-trading" selected>/);
+  assert.match(html, /data-url-mode="algo-trading"/);
+  assert.match(html, /credited to the <span class="noun">technique<\/span>/);
+  html = await (await fetch(base + '/?mode=%3Cscript%3E', { headers: { cookie } })).text();
+  assert.match(html, /data-url-mode=""/, 'unknown ?mode is ignored');
 });
 
-test('a DATA_DIR deck overrides the default', async () => {
-  fs.mkdirSync(path.join(dataDir, 'decks'), { recursive: true });
-  fs.writeFileSync(path.join(dataDir, 'decks', 'problems.yaml'), 'name: Workshop\nproblems:\n  - Too many meetings\n  - label: A label that is far too long to fit\n');
-  const cookie = await login('Facilitator');
+test('modes API: list, one mode, decks alias, unknown', async () => {
+  const cookie = await login('Mode Reader');
+  const list = await (await fetch(base + '/api/modes', { headers: { cookie } })).json();
+  assert.equal(list.default, 'software-engineering');
+  assert.deepEqual(list.modes.map((m) => m.id), ['software-engineering', 'algo-trading', 'innovation']);
+  const at = await (await fetch(base + '/api/modes/algo-trading', { headers: { cookie } })).json();
+  assert.equal(at.name, 'Algo Trading');
+  assert.equal(at.solutionNoun, 'technique');
+  assert.ok(at.problems.some((p) => p.label === 'Look-ahead bias' && p.bestFits.includes('Point-in-time data')));
+  assert.ok(at.solutions.every((x) => x.name && x.short && x.hint));
   const d = await (await fetch(base + '/api/decks', { headers: { cookie } })).json();
-  assert.equal(d.problems.name, 'Workshop');
-  assert.equal(d.problems.source, 'data');
-  assert.equal(d.problems.items[0].label, 'Too many meetings');
-  assert.ok(d.problems.items[1].label.length <= 18);
-  assert.equal(d.principles.source, 'default');
-  fs.rmSync(path.join(dataDir, 'decks'), { recursive: true });
+  assert.equal(d.id, 'software-engineering');
+  const d2 = await (await fetch(base + '/api/decks?mode=innovation', { headers: { cookie } })).json();
+  assert.ok(d2.solutions.some((x) => x.name === 'Do it in reverse'));
+  assert.equal((await fetch(base + '/api/modes/nope', { headers: { cookie } })).status, 404);
+  assert.equal((await fetch(base + '/api/scores?mode=nope', { headers: { cookie } })).status, 404);
+});
+
+test('a DATA_DIR mode file appears without a restart', async () => {
+  const dir = path.join(dataDir, 'modes');
+  fs.mkdirSync(dir, { recursive: true });
+  const mode = {
+    id: 'workshop', name: 'Workshop', solutionNoun: 'idea',
+    problems: ['Too many meetings', 'Slow decisions', 'No budget', 'Silos', 'Churn'],
+    solutions: ['A', 'B', 'C', 'D', 'E'].map((n) => ({ name: 'Idea ' + n, tag: 'ID' + n, hint: 'Try ' + n + '.' })),
+  };
+  fs.writeFileSync(path.join(dir, 'workshop.yaml'), JSON.stringify(mode));
+  const cookie = await login('Facilitator');
+  const list = await (await fetch(base + '/api/modes', { headers: { cookie } })).json();
+  assert.ok(list.modes.some((m) => m.id === 'workshop' && m.source === 'data'));
+  const w = await (await fetch(base + '/api/modes/workshop', { headers: { cookie } })).json();
+  assert.equal(w.problems[0].label, 'Too many meetings');
+  assert.equal(w.solutionNounPlural, 'ideas');
+  fs.rmSync(dir, { recursive: true });
+});
+
+test('scores are per mode', async () => {
+  const a = await login('Quant');
+  const b = await login('Architect');
+  let r = await post(a, game({ mode: 'algo-trading', score: 900, rightTools: 2 }));
+  assert.equal(r.status, 201);
+  let j = await r.json();
+  assert.deepEqual(j.mode, { id: 'algo-trading', name: 'Algo Trading' });
+  assert.equal(j.top[0].displayName, 'Quant');
+  assert.equal(j.top[0].rightTools, 2);
+  r = await post(b, game({ mode: 'innovation', score: 777 }));
+  assert.equal(r.status, 201);
+
+  const at = await (await fetch(base + '/api/scores?mode=algo-trading', { headers: { cookie: b } })).json();
+  assert.deepEqual(at.top.map((x) => x.displayName), ['Quant']);
+  assert.equal(at.me, null, 'Architect has not played this mode');
+  const tr = await (await fetch(base + '/api/scores?mode=innovation', { headers: { cookie: a } })).json();
+  assert.deepEqual(tr.top.map((x) => x.displayName), ['Architect']);
+  const se = await (await fetch(base + '/api/scores', { headers: { cookie: a } })).json();
+  assert.equal(se.mode.id, 'software-engineering');
+  assert.ok(!se.top.some((x) => x.displayName === 'Quant'));
+
+  await new Promise((res) => setTimeout(res, 2100)); // flood guard
+  r = await post(a, game({ mode: 'no-such-mode' }));
+  assert.equal(r.status, 400);
+  assert.equal((await r.json()).error, 'unknown mode');
+});
+
+test('migration v2: existing scores become innovation-mode scores', () => {
+  const { DatabaseSync } = require('node:sqlite');
+  const { migrate, MIGRATIONS } = require('../src/db');
+  const old = new DatabaseSync(':memory:');
+  old.exec(MIGRATIONS[0]);
+  old.exec('PRAGMA user_version = 1');
+  old.prepare(`INSERT INTO scores (user_id, display_name, score, level, problems_solved, perfect_fits, best_combo, solution_rows, pieces, duration_ms)
+    VALUES ('u1', 'Old Timer', 500, 1, 2, 0, 1, 0, 30, 60000)`).run();
+  migrate(old);
+  assert.equal(old.prepare('PRAGMA user_version').get().user_version, MIGRATIONS.length);
+  const row = old.prepare('SELECT mode, right_tools, score FROM scores').get();
+  assert.deepEqual({ ...row }, { mode: 'innovation', right_tools: 0, score: 500 });
+  migrate(old); // idempotent
+  old.close();
 });
 
 test('scores: submit, leaderboard, my best', async () => {
@@ -162,9 +234,24 @@ test('score validation is proportionate', () => {
     game({ pieces: 5000 }), // too fast for 90 s
     game({ score: 99_999_999 }), // not plausible for this game
     game({ topPrinciple: 42 }),
+    game({ rightTools: 7 }), // more than problems solved
+    game({ rightTools: -1 }),
+    game({ mode: 42 }),
     null, [], 'x',
   ];
   for (const b of bad) assert.equal(validateSubmission(b).ok, false, JSON.stringify(b));
+  const isMode = (id) => id === 'software-engineering';
+  assert.equal(validateSubmission(game({ mode: 'x' }), { isMode }).ok, false);
+  assert.equal(validateSubmission(game(), { isMode, defaultMode: 'software-engineering' }).value.mode, 'software-engineering');
+  // the Right-tool bonus raised the ceiling: a perfect + right-tool game still validates
+  const g2 = E.createGame({ seed: 1, startProblemRows: 0 });
+  E.drainEvents(g2);
+  E.insertProblemRow(g2, { label: 'P', bestFits: ['Fix'] }, [3, 4, 5, 6]);
+  g2.active = { id: 999, type: 'I', rot: 0, x: 3, y: 0, principle: { name: 'Fix', short: 'FIX', hint: '' } };
+  E.hardDrop(g2);
+  g2.stats.elapsedMs = 5000;
+  assert.equal(g2.stats.rightTools, 1);
+  assert.equal(validateSubmission(E.summary(g2)).ok, true, JSON.stringify(validateSubmission(E.summary(g2))));
   // a real (bot-played) game always validates
   const g = E.createGame({ seed: 7 });
   for (let i = 0; i < 40 && !g.over; i++) { E.hardDrop(g); E.update(g, 250); }

@@ -86,6 +86,19 @@ kbd {
 }
 .portal-link:hover, .chip:hover { border-color: var(--accent); }
 .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.mode-pick { display: inline-flex; align-items: center; gap: .4rem; }
+.mode-pick-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+#mode-select {
+  appearance: none; -webkit-appearance: none;
+  padding: .32rem 2rem .32rem .75rem; border-radius: 999px;
+  border: 1px solid var(--border); background-color: var(--surface-2);
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 55%, calc(100% - 10px) 55%;
+  background-size: 5px 5px; background-repeat: no-repeat;
+  font-weight: 650; font-size: .88rem; cursor: pointer; max-width: 16rem; text-overflow: ellipsis;
+}
+#mode-select:hover { border-color: var(--accent); }
+#mode-select:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
 .who { font-weight: 600; font-size: .9rem; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .btn {
@@ -133,6 +146,11 @@ kbd {
 .next-item canvas { width: 60px; height: 40px; flex: none; }
 .next-item div { font-size: .82rem; font-weight: 600; line-height: 1.2; }
 .next-item:not(:first-child) { opacity: .75; }
+.fits { margin: .45rem 0 0; line-height: 1.35; }
+.fits b { color: var(--text); font-weight: 600; }
+.right-for { margin: .45rem 0 0; color: var(--ok); font-weight: 650; }
+.mode-line { margin: .1rem 0 0; font-weight: 700; color: var(--accent); }
+.mode-line + p { margin: .1rem 0 .4rem; }
 .rise-label { font-weight: 700; color: var(--problem-red); margin-bottom: .45rem; }
 .meter { height: 6px; border-radius: 6px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--border); }
 .meter div { height: 100%; width: 0; background: linear-gradient(90deg, var(--problem-amber), var(--problem-red)); }
@@ -176,6 +194,7 @@ kbd {
   font-size: .7rem; font-weight: 800; letter-spacing: .04em; vertical-align: 1px;
   background: var(--perfect); color: #2b1d00;
 }
+.toast .badge.right { background: var(--ok); color: #00281a; }
 .toast .badge.combo { background: var(--accent-2); color: #002a30; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(-8px) scale(.97); } }
 @keyframes toast-out { to { opacity: 0; transform: translateY(-6px); } }
@@ -218,11 +237,13 @@ kbd {
 .sw.problem { background: linear-gradient(135deg, var(--problem-amber), var(--problem-red)); }
 .sw.perfect { background: var(--perfect); }
 .sw.none { background: var(--border); }
+.sw.right { background: var(--ok); }
 .sw.solution { background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
 .keys { font-size: .78rem; margin: .8rem 0 0; line-height: 2; }
 .eyebrow { margin: 0; color: var(--problem-red); font-weight: 800; text-transform: uppercase; letter-spacing: .1em; font-size: .75rem; }
 
 .report .report-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem; margin: .6rem 0; }
+.report .report-grid .big-stat:first-child { grid-column: 1 / -1; }
 .big-stat { background: var(--surface-2); border-radius: 10px; padding: .45rem .6rem; }
 .big-stat span { display: block; font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 .big-stat b { font-size: 1.3rem; font-variant-numeric: tabular-nums; }
@@ -231,6 +252,7 @@ kbd {
 .solved-list, .principle-list { margin: 0; padding-left: 1.3rem; font-size: .85rem; max-height: 9.5rem; overflow-y: auto; }
 .solved-list li { margin: .1rem 0; }
 .solved-list .pf { color: var(--perfect); font-weight: 700; font-size: .75rem; margin-left: .3rem; }
+.solved-list .rt { color: var(--ok); font-weight: 700; font-size: .75rem; margin-left: .3rem; }
 @media (prefers-color-scheme: light) { .solved-list .pf { color: #a16b00; } }
 #r-meta { margin: 0; font-size: .82rem; }
 .board table { width: 100%; border-collapse: collapse; font-size: .82rem; }
@@ -264,7 +286,10 @@ kbd {
 /* ---------- narrow screens ---------- */
 @media (max-width: 760px) {
   .topbar { padding: .45rem .7rem; gap: .4rem; }
-  .topbar .tagline, .who { display: none; }
+  .topbar .tagline, .who, .mode-pick-label { display: none; }
+  .topbar .brand { font-size: 1.1rem; }
+  #mode-select { max-width: 11.5rem; font-size: .82rem; }
+  .fits, .right-for { display: none; }
   .layout {
     grid-template-columns: 1fr auto;
     grid-template-areas: "well left" "well right";

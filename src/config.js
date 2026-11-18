@@ -19,6 +19,8 @@ function loadConfig(env = process.env) {
     publicUrl: trimSlash(env.PUBLIC_URL),
     portalUrl: trimSlash(env.PORTAL_URL),
     trustProxy: env.TRUST_PROXY || '',
+    // Game mode shown first and used when the viewer hasn't picked one (modes/*.yaml id).
+    defaultMode: (env.DEFAULT_MODE || 'software-engineering').trim(),
     // Login standard (horizon-infra design §2), read by the shared auth module.
     // Throws on impossible settings (both modes off, SSO without a client ID, ...).
     auth: loadAuthConfig(env),

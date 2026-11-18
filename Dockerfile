@@ -13,7 +13,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
 COPY src/ src/
 COPY public/ public/
-COPY decks/ decks/
+COPY modes/ modes/
 
 EXPOSE 8195
 VOLUME ["/data"]

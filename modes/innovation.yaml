@@ -1,0 +1,98 @@
+# Breakthrough mode: General innovation (TRIZ).
+# Generic organisation & technology problems meet the 40 TRIZ inventive
+# principles (names shortened to fit on a block).
+# File format: see README.md, "Make your own mode".
+id: innovation
+name: General innovation (TRIZ)
+description: Everyday organisation and technology problems meet the 40 TRIZ inventive principles.
+solutionNoun: principle
+solutionNounPlural: principles
+
+problems:
+  - label: Data silos
+    note: Teams can't see each other's data.
+  - label: Legacy monolith
+    note: One big system nobody dares change.
+  - label: Slow approvals
+    note: Decisions wait weeks for sign-off.
+  - label: Tech debt
+  - label: Skills gap
+  - label: Vendor lock-in
+  - label: Manual handoffs
+  - label: Unclear ownership
+  - label: Alert fatigue
+  - label: Shadow IT
+  - label: Meeting overload
+  - label: Siloed teams
+  - label: Flaky tests
+  - label: Slow releases
+  - label: Low adoption
+  - label: Scope creep
+  - label: Budget freeze
+  - label: Key-person risk
+  - label: Duplicate tools
+  - label: Poor data quality
+  - label: Security backlog
+  - label: Compliance drag
+  - label: Hiring freeze
+  - label: Burnout
+  - label: Hidden costs
+  - label: No feedback loop
+  - label: Spreadsheet sprawl
+  - label: Unclear strategy
+  - label: Change fatigue
+  - label: Brittle pipelines
+  - label: Long lead times
+  - label: Knowledge loss
+  - label: Customer churn
+  - label: Rising cloud bill
+  - label: Integration hell
+  - label: Not invented here
+  - label: Pilot purgatory
+  - label: Data privacy risk
+  - label: Outdated docs
+  - label: Single point fail
+  - label: Talent drain
+  - label: Priority overload
+
+solutions:
+  - { name: Segmentation, tag: SEG, hint: "Divide it into independent or modular parts." }
+  - { name: Taking out, tag: OUT, hint: "Separate out the troublesome part, or keep only the useful one." }
+  - { name: Local quality, tag: LOC, hint: "Make each part fit its own local conditions." }
+  - { name: Asymmetry, tag: ASY, hint: "Replace symmetry with deliberate imbalance." }
+  - { name: Merging, tag: MRG, hint: "Bring identical or related things or operations together." }
+  - { name: Universality, tag: UNI, hint: "Make one part do several jobs." }
+  - { name: Nesting, tag: NST, hint: "Place one thing inside another." }
+  - { name: Anti-weight, tag: AWT, hint: "Offset a burden by pairing it with something that lifts it." }
+  - { name: Counter in advance, tag: PCA, hint: "Take early action to cancel a known harm." }
+  - { name: Prior action, tag: PRI, hint: "Do the required work before it is needed." }
+  - { name: Cushion in advance, tag: CSH, hint: "Prepare fallbacks for the parts likely to fail." }
+  - { name: Equipotentiality, tag: EQP, hint: "Remove the need to raise or lower things; level the path." }
+  - { name: Do it in reverse, tag: REV, hint: "Invert the action, the process or the order." }
+  - { name: Spheroidality, tag: CRV, hint: "Swap straight lines and steps for curves and rotation." }
+  - { name: Dynamics, tag: DYN, hint: "Let characteristics change to stay optimal." }
+  - { name: Partial action, tag: PRT, hint: "If 100% is hard, do a bit less or a bit more." }
+  - { name: Another dimension, tag: DIM, hint: "Move into a new plane, layer or axis." }
+  - { name: Vibration, tag: VIB, hint: "Add oscillation or rhythm; increase its frequency." }
+  - { name: Periodic action, tag: PER, hint: "Replace continuous action with pulses." }
+  - { name: Continuous action, tag: CON, hint: "Keep useful work flowing without idle time." }
+  - { name: Rush through, tag: RSH, hint: "Pass through the harmful stage at high speed." }
+  - { name: Harm into benefit, tag: HRM, hint: "Use a harmful factor to get a positive effect." }
+  - { name: Feedback, tag: FBK, hint: "Introduce or improve feedback loops." }
+  - { name: Intermediary, tag: MED, hint: "Use a go-between to carry or transfer the action." }
+  - { name: Self-service, tag: SLF, hint: "Make it serve and maintain itself." }
+  - { name: Copying, tag: CPY, hint: "Use a simple, cheap copy instead of the original." }
+  - { name: Cheap disposables, tag: DSP, hint: "Replace one expensive thing with many cheap ones." }
+  - { name: Replace mechanics, tag: MEC, hint: "Swap a manual or mechanical means for a smarter field." }
+  - { name: Fluid systems, tag: FLU, hint: "Use flexible, fluid parts instead of rigid ones." }
+  - { name: Flexible shells, tag: SHL, hint: "Isolate with thin, flexible membranes." }
+  - { name: Porous materials, tag: POR, hint: "Add holes and channels; let things flow through." }
+  - { name: Colour changes, tag: COL, hint: "Change visibility or transparency to reveal what matters." }
+  - { name: Homogeneity, tag: HOM, hint: "Make interacting parts of the same kind." }
+  - { name: Discard & recover, tag: DIS, hint: "Let parts vanish after use, or restore them in place." }
+  - { name: Parameter changes, tag: PAR, hint: "Change state, concentration, flexibility or scale." }
+  - { name: Phase transitions, tag: PHS, hint: "Exploit what happens as things change state." }
+  - { name: Thermal expansion, tag: THM, hint: "Use expansion or contraction under changing conditions." }
+  - { name: Boost interactions, tag: BST, hint: "Enrich the environment to speed up reactions." }
+  - { name: Inert atmosphere, tag: INR, hint: "Create a neutral, calm environment around the work." }
+  - { name: Composites, tag: CMP, hint: "Combine different materials for a better whole." }

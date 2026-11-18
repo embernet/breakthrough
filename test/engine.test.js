@@ -125,6 +125,53 @@ test('not perfect when an earlier piece helped fill the gap', () => {
   assert.deepEqual(by, { 'Tech debt': false, 'Skills gap': true });
 });
 
+test('right tool: a best-fit solution scores ×1.5 and stacks with a perfect fit', () => {
+  const base = E.SCORE.problemBase + 3 * E.SCORE.problemPerExtraGap; // a 4-gap slot
+  const play = (principle, bestFits) => {
+    const g = blank();
+    E.insertProblemRow(g, { label: 'Cache stampede', bestFits }, [3, 4, 5, 6]);
+    setActive(g, 'I', 0, 3, 0, { name: principle, short: 'X', hint: '' });
+    assert.deepEqual(E.rightToolFor(g, 'Request coalescing'), bestFits.includes('Request coalescing') ? ['Cache stampede'] : []);
+    E.hardDrop(g);
+    return { g, s: g.stats.solved[0], ev: E.drainEvents(g).find((e) => e.type === 'break') };
+  };
+  const right = play('Request coalescing', ['Request coalescing', 'Jittered TTLs']);
+  assert.equal(right.s.rightTool, true);
+  assert.equal(right.s.perfect, true);
+  assert.equal(right.s.points, base * E.SCORE.perfectMultiplier * E.SCORE.rightToolMultiplier);
+  assert.equal(right.ev.rightTool, true);
+  assert.equal(right.g.stats.rightTools, 1);
+  assert.equal(E.summary(right.g).rightTools, 1);
+
+  const wrong = play('Sharding', ['Request coalescing']);
+  assert.equal(wrong.s.rightTool, false);
+  assert.equal(wrong.s.points, base * E.SCORE.perfectMultiplier);
+  assert.equal(wrong.g.stats.rightTools, 0);
+
+  const none = play('Sharding', []); // problems without bestFits never give the bonus
+  assert.equal(none.s.rightTool, false);
+});
+
+test('right tool without a perfect fit', () => {
+  const g = blank();
+  E.insertProblemRow(g, { label: 'Overfitted alpha', bestFits: ['Walk-forward test'] }, [4]);
+  setActive(g, 'I', 1, 2, 0, { name: 'Walk-forward test', short: 'WFT', hint: '' });
+  E.hardDrop(g);
+  const [s] = g.stats.solved;
+  assert.equal(s.perfect, false);
+  assert.equal(s.rightTool, true);
+  assert.equal(s.points, Math.round(E.SCORE.problemBase * E.SCORE.rightToolMultiplier));
+});
+
+test('the report follows the mode', () => {
+  const g = E.createGame({ seed: 3, modeId: 'algo-trading', modeName: 'Algo Trading', solutionNoun: 'technique', solutionNounPlural: 'techniques' });
+  for (let i = 0; i < 5; i++) E.hardDrop(g);
+  const text = E.reportText(g, 'Ada');
+  assert.match(text, /^BREAKTHROUGH: Innovation report\nMode: Algo Trading\n/);
+  assert.match(text, /Most-used techniques:/);
+  assert.equal(E.summary(g).mode, 'algo-trading');
+});
+
 test('consecutive breaks build a combo; a dry piece resets it', () => {
   const g = blank();
   E.insertProblemRow(g, { label: 'A' }, [6, 7, 8, 9]);
