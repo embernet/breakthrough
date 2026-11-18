@@ -1,6 +1,6 @@
 # Breakthrough
 
-**Problems rise. Solutions fall.** A falling-block puzzle for the Horizon suite.
+**Problems rise. Solutions fall.** A standalone falling-block puzzle. It can also sit behind a suite portal (see *Joining a portal*).
 
 Problem rows (e.g. *Cache stampede*) rise from the bottom of a 10×20 well, each with a
 slot of 1–4 gaps. You steer four-cell solution pieces, each carrying a solution
@@ -71,13 +71,12 @@ Read from the environment by `src/config.js` (compose passes these from `.env`):
 | `DATA_DIR` | `./data` (`/data` in the container) | SQLite DB `breakthrough.db`, optional `modes/` |
 | `DEFAULT_MODE` | `software-engineering` | Mode shown first and used when the viewer hasn't picked one (falls back to `software-engineering` if that id isn't loaded) |
 | `PUBLIC_URL` | none | Public base URL (SSO redirect URI `<PUBLIC_URL>/auth/callback`; `https` makes cookies `Secure`) |
-| `PORTAL_URL` | none | Shows a "← Horizon" link in the header |
+| `PORTAL_URL`, `PORTAL_NAME` | none | Optional suite portal: with both set, the header shows "← `PORTAL_NAME`" linking to `PORTAL_URL` |
 | `TRUST_PROXY` | none | Express `trust proxy` value when behind the reverse proxy |
 | `AUTH_LOCAL`, `AUTH_SSO`, `SSO_*`, `SESSION_DAYS` | see `.env.example` | Login standard, for the shared auth module |
 
 Compose-level: `COMPOSE_PROJECT_NAME`, `BREAKTHROUGH_PORT`, `BREAKTHROUGH_DATA_DIR`,
-`BREAKTHROUGH_BACKUP_DIR`. Prod values are in the `.env.example` comments. Ports,
-URLs and paths are recorded in `~/git/horizon-infra/inventory.md`.
+`BREAKTHROUGH_BACKUP_DIR`. Prod values are in the `.env.example` comments.
 
 ## Modes
 
@@ -149,10 +148,11 @@ guard. The aim is to keep junk off the leaderboard, not to stop a determined che
 
 ## Login
 
-`src/auth/` is the **shared Horizon login module**, copied unchanged from the
-`horizon` portal repo (its `src/auth/README.md` is the reference). By default only local
-accounts are on; `AUTH_SSO=on` adds TIG-SSO, with local accounts then at `/local`
-while `AUTH_LOCAL=on`. Fix bugs in the portal's copy first, then re-copy.
+`src/auth/` is a shared login module (local accounts, plus optional OpenID
+Connect single sign-on); `src/auth/README.md` documents it. By default only local
+accounts are on. `AUTH_SSO=on` adds single sign-on, with local accounts then at
+`/local` while `AUTH_LOCAL=on`. The module is vendored: change it at its source and
+re-copy, rather than editing it here.
 
 ```bash
 scripts/user.sh add mark "Mark Burnett"   # add or reset a local account (prompts for the password)
@@ -172,7 +172,7 @@ src/db.js            node:sqlite, migrations (PRAGMA user_version)
 src/scores.js        submission validation + leaderboard queries
 src/modes.js         mode files: loading, validation, DATA_DIR overrides
 src/views.js         HTML shell for the game page
-src/auth/            shared Horizon login module (copied from the horizon repo)
+src/auth/            shared login module (vendored; see src/auth/README.md)
 public/js/engine.js  pure game logic, no DOM (browser global + require())
 public/js/game.js    canvas renderer, effects, input, sound, UI
 public/css/app.css   styles (light/dark via prefers-color-scheme)
@@ -181,10 +181,19 @@ test/                node --test: engine rules, mode files, HTTP API
 scripts/promote.sh   prod release: backup, checkout tag, rebuild, health-check
 ```
 
+## Joining a portal
+
+The app knows nothing about any portal. To list it in one:
+
+1. Set `PORTAL_URL` and `PORTAL_NAME` in this deployment's `.env` (git-ignored) for the "← back" link.
+2. Add a tile in the portal's own config, pointing at this app's URL, with health check `/healthz`.
+3. For single sign-on across the suite, turn on `AUTH_SSO` with this app's own client ID.
+
+Leave all three out and it runs standalone.
+
 ## Releasing to prod
 
-Follow `~/git/horizon-infra/standards.md` §6: tag `vX.Y.Z` here, push, then in
-`~/apps/breakthrough` run `scripts/promote.sh --ref vX.Y.Z`. The script refuses a
+Tag `vX.Y.Z` here, push, then in the prod checkout (e.g. `~/apps/breakthrough`) run `scripts/promote.sh --ref vX.Y.Z`. The script refuses a
 dirty checkout and snapshots `DATA_DIR/breakthrough.db` with SQLite `VACUUM INTO`,
 run through `node:sqlite` inside the container (no `sqlite3` binary needed). It
 checks the snapshot's integrity, keeps the newest 10 in `BREAKTHROUGH_BACKUP_DIR`,

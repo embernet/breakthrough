@@ -15,7 +15,7 @@ let userSeq = 0;
 
 test.before(async () => {
   dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'breakthrough-test-'));
-  const config = loadConfig({ DATA_DIR: dataDir, PORT: '8195', PORTAL_URL: 'https://horizon.example/' });
+  const config = loadConfig({ DATA_DIR: dataDir, PORT: '8195', PORTAL_URL: 'https://portal.example/', PORTAL_NAME: 'Example Suite' });
   const made = createApp(config);
   db = made.db;
   auth = made.auth;
@@ -80,13 +80,13 @@ test('login rejects open redirects', async () => {
   assert.equal(res.headers.get('location'), '/');
 });
 
-test('game page shows the player and the Horizon link', async () => {
+test('game page shows the player and the configured portal link', async () => {
   const cookie = await login('Ada <Lovelace>');
   const r = await fetch(base + '/', { headers: { cookie } });
   const html = await r.text();
   assert.equal(r.status, 200);
   assert.match(html, /Ada &lt;Lovelace&gt;/);
-  assert.match(html, /href="https:\/\/horizon\.example">← Horizon/);
+  assert.match(html, /href="https:\/\/portal\.example">← Example Suite/);
   assert.match(r.headers.get('content-security-policy'), /default-src 'self'/);
 });
 
@@ -277,4 +277,13 @@ test('score validation is proportionate', () => {
   const g = E.createGame({ seed: 7 });
   for (let i = 0; i < 40 && !g.over; i++) { E.hardDrop(g); E.update(g, 250); }
   assert.equal(validateSubmission(E.summary(g)).ok, true, JSON.stringify(validateSubmission(E.summary(g))));
+});
+
+test('standalone: no portal settings, no portal link', async () => {
+  const views = require('../src/views');
+  const user = { id: 'local:x', username: 'x', displayName: 'X', source: 'local', isAdmin: false };
+  for (const extra of [{}, { portalUrl: 'https://portal.example' }, { portalName: 'Example Suite' }]) {
+    const html = views.gamePage({ user, version: 'v', ...extra });
+    assert.doesNotMatch(html, /portal-link/);
+  }
 });

@@ -17,11 +17,13 @@ function loadConfig(env = process.env) {
     host: env.HOST || '0.0.0.0',
     dataDir: path.resolve(env.DATA_DIR || path.join(__dirname, '..', 'data')),
     publicUrl: trimSlash(env.PUBLIC_URL),
+    // Optional suite portal link (suite-integration standard): shown only when both are set.
     portalUrl: trimSlash(env.PORTAL_URL),
+    portalName: String(env.PORTAL_NAME || '').trim().slice(0, 40),
     trustProxy: env.TRUST_PROXY || '',
     // Game mode shown first and used when the viewer hasn't picked one (modes/*.yaml id).
     defaultMode: (env.DEFAULT_MODE || 'software-engineering').trim(),
-    // Login standard (horizon-infra design §2), read by the shared auth module.
+    // Login settings, read by the shared auth module (src/auth/README.md).
     // Throws on impossible settings (both modes off, SSO without a client ID, ...).
     auth: loadAuthConfig(env),
   };

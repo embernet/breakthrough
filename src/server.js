@@ -64,7 +64,7 @@ function createApp(config = loadConfig()) {
     const list = modes.list();
     const asked = typeof req.query.mode === 'string' ? req.query.mode : '';
     res.type('html').send(views.gamePage({
-      user: req.user, portalUrl: config.portalUrl, version: assetV,
+      user: req.user, portalUrl: config.portalUrl, portalName: config.portalName, version: assetV,
       modes: list, defaultMode: modes.defaultId(), selectedMode: list.some((m) => m.id === asked) ? asked : '',
     }));
   });

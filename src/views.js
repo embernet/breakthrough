@@ -5,7 +5,7 @@ function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function gamePage({ user, portalUrl, version, modes = [], defaultMode = '', selectedMode = '' }) {
+function gamePage({ user, portalUrl, portalName, version, modes = [], defaultMode = '', selectedMode = '' }) {
   const v = esc(version);
   const current = modes.find((m) => m.id === (selectedMode || defaultMode)) || modes[0] || null;
   const noun = current ? current.solutionNoun : 'principle';
@@ -27,7 +27,7 @@ function gamePage({ user, portalUrl, version, modes = [], defaultMode = '', sele
     <span class="mode-pick-label">Mode</span>
     <select id="mode-select" aria-label="Game mode">${options}</select>
   </label>
-  ${portalUrl ? `<a class="portal-link" href="${esc(portalUrl)}">← Horizon</a>` : ''}
+  ${portalUrl && portalName ? `<a class="portal-link" href="${esc(portalUrl)}">← ${esc(portalName)}</a>` : ''}
   <h1 class="brand">Break<span>through</span></h1>
   <p class="tagline">Problems rise. Solutions fall.</p>
   <div class="spacer"></div>

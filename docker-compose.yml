@@ -7,7 +7,6 @@
 # a fresh clone can never collide with prod. Prod (~/apps/breakthrough/.env) sets
 # COMPOSE_PROJECT_NAME=breakthrough, BREAKTHROUGH_PORT=8190,
 # BREAKTHROUGH_DATA_DIR=/data/apps/breakthrough.
-# See ~/git/horizon-infra/standards.md for the dev/prod convention.
 name: ${COMPOSE_PROJECT_NAME:-breakthrough-dev}
 
 services:
@@ -22,6 +21,7 @@ services:
       DATA_DIR: /data
       PUBLIC_URL: "${PUBLIC_URL:-}"
       PORTAL_URL: "${PORTAL_URL:-}"
+      PORTAL_NAME: "${PORTAL_NAME:-}"
       TRUST_PROXY: "${TRUST_PROXY:-}"
       # Game mode shown by default (a modes/*.yaml id)
       DEFAULT_MODE: "${DEFAULT_MODE:-software-engineering}"
@@ -32,7 +32,7 @@ services:
       SSO_CLIENT_ID: "${SSO_CLIENT_ID:-}"
       SSO_CLIENT_SECRET_FILE: "${SSO_CLIENT_SECRET_FILE:-}"
       LOCAL_ADMIN_USERS: "${LOCAL_ADMIN_USERS:-}"
-      # trust the host's certificate store (has ISRG Root YR, needed for TIG-SSO; see horizon-infra inventory)
+      # trust the host's certificate store (e.g. newer roots an SSO issuer may chain to)
       NODE_USE_SYSTEM_CA: "1"
       SSO_ADMIN_GROUP: "${SSO_ADMIN_GROUP:-}"
       SESSION_DAYS: "${SESSION_DAYS:-7}"

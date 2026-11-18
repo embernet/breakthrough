@@ -2,7 +2,7 @@
   "name": "breakthrough",
   "version": "0.1.0",
   "private": true,
-  "description": "Breakthrough: problems rise, solutions fall. A falling-block innovation puzzle for the Horizon suite.",
+  "description": "Breakthrough: problems rise, solutions fall. A falling-block innovation puzzle.",
   "main": "src/server.js",
   "type": "commonjs",
   "engines": {
