@@ -938,15 +938,7 @@
     const want = select.value;
     const prev = content ? content.id : null;
     if (want === prev) return;
-    const inProgress = game && !game.over && (mode === 'play' || mode === 'pause');
-    if (inProgress) {
-      pause();
-      const name = select.options[select.selectedIndex].textContent;
-      if (!window.confirm(`Switch to ${name}? This ends your current game.`)) {
-        if (prev) select.value = prev;
-        return;
-      }
-    }
+    // Switching mode simply resets: no confirmation (apps never use browser dialogs).
     select.blur(); // arrow keys belong to the game again
     await useMode(want);
   });

@@ -59,8 +59,12 @@ function createAuth({ db, appName, config }) {
   function sameOrigin(req) {
     const origin = req.get('origin');
     if (!origin) return true; // older browsers / curl; SameSite=Lax still applies to the cookie
-    const own = cfg.publicUrl || `${req.protocol}://${req.get('host')}`;
-    return origin === new URL(own).origin;
+    // Accept the configured public origin and the origin the browser actually used
+    // (e.g. the host IP on dev while PUBLIC_URL is localhost). A cross-site form
+    // always carries the other site's Origin, so it matches neither.
+    const allowed = [`${req.protocol}://${req.get('host')}`];
+    if (cfg.publicUrl) allowed.push(new URL(cfg.publicUrl).origin);
+    return allowed.includes(origin);
   }
 
   // ---- throttle local password guesses: 5 failures per user+IP -> 60 s lock ----

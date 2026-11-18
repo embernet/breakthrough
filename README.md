@@ -30,7 +30,7 @@ slot of 1–4 gaps. You steer four-cell solution pieces, each carrying a solutio
   end screen is an **Innovation report** (copyable as plain text) plus that mode's
   leaderboard. Scores and leaderboards are per mode.
 
-The dropdown starts a fresh game (it asks first if one is in progress). Your
+The dropdown starts a fresh game straight away, with no confirmation. Your
 choice is remembered in the browser; `/?mode=algo-trading` links straight to a mode.
 
 Controls: ←/→ or A/D move · ↑/W/X rotate · Z/Q rotate back · ↓/S soft drop ·
