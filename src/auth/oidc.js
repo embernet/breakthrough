@@ -54,13 +54,16 @@ function createOidc(cfg) {
     async finishLogin(currentUrl, pending) {
       const o = await oc();
       const config = await getConfig();
+      // Also verify the ID token's signature against the issuer's JWKS. The spec lets a
+      // client rely on TLS for tokens from the token endpoint; checking costs little.
+      o.enableNonRepudiationChecks(config);
       const tokens = await o.authorizationCodeGrant(config, new URL(currentUrl), {
         pkceCodeVerifier: pending.verifier,
         expectedState: pending.state,
         expectedNonce: pending.nonce,
         idTokenExpected: true,
       });
-      const c = tokens.claims(); // ID token: signature, iss, aud, exp, nonce checked by the library
+      const c = tokens.claims(); // ID token: signature (above), iss, aud, exp, nonce checked by the library
       return {
         claims: {
           sub: c.sub,
