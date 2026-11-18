@@ -1,0 +1,209 @@
+# Breakthrough mode: Business Operations.
+# The challenges everyone running a business knows and loves, met by the
+# management and operations toolkit.
+# File format: see README.md, "Make your own mode".
+id: business-operations
+name: Business Operations
+description: The cash, customer, supply, people and management headaches of running a business, met by the operations toolkit.
+order: 3
+solutionNoun: tactic
+solutionNounPlural: tactics
+
+problems:
+  # --- cash & finance ---
+  - label: Cash-flow crunch
+    note: Profitable on paper, broke on Tuesday.
+    bestFits: [Cash-flow forecast, Factoring, Payment terms]
+  - label: Late payers
+    note: Net 30 means 90, apparently.
+    bestFits: [Dunning, Payment terms, Factoring]
+  - label: Margin squeeze
+    note: Costs up, prices flat, smiles fading.
+    bestFits: [Value-based pricing, Lean, Zero-based budgeting]
+  - label: Cost overruns
+    note: It costs what it costs, plus 40%.
+    bestFits: [Stage-gate review, Change control]
+  - label: Bad debt
+    note: The customer who never paid, and never will.
+    bestFits: [Credit checks, Dunning]
+  - label: Budget creep
+    note: Every line grows a little, every year, forever.
+    bestFits: [Zero-based budgeting]
+  # --- sales & customers ---
+  - label: Customer churn
+    note: They leave quietly and tell their friends loudly.
+    bestFits: [Customer success, Retention offers, Net Promoter loop]
+  - label: Price war
+    note: Racing a competitor to zero.
+    bestFits: [Value-based pricing, Upselling]
+  - label: Pipeline drought
+    note: Nothing in the funnel past next month.
+    bestFits: [Upselling, Net Promoter loop]
+  - label: Complaints pile-up
+    note: The support inbox is mostly anger.
+    bestFits: [Root-cause analysis, Net Promoter loop, Customer success]
+  - label: Scope creep
+    note: Just one more small thing, forever.
+    bestFits: [Change control]
+  - label: Discount addiction
+    note: Nobody has paid list price since 2019.
+    bestFits: [Value-based pricing, Dynamic pricing]
+  - label: Seasonal swings
+    note: Feast in December, famine in February.
+    bestFits: [Demand planning, Dynamic pricing]
+  # --- operations & supply ---
+  - label: Supply delays
+    note: The container is somewhere at sea.
+    bestFits: [Dual sourcing, Safety stock]
+  - label: Stockouts
+    note: Sold out of the one thing people want.
+    bestFits: [Safety stock, Demand planning, Kanban]
+  - label: Excess inventory
+    note: A warehouse full of last year's best idea.
+    bestFits: [Just-in-time, Demand planning, Kanban]
+  - label: Bottleneck
+    note: Everything waits on one step.
+    bestFits: [Constraint theory, Value stream map]
+  - label: Quality defects
+    note: Made fast, returned faster.
+    bestFits: [Six Sigma, Poka-yoke, Root-cause analysis]
+  - label: Vendor lock-in
+    note: Leaving would cost more than staying.
+    bestFits: [Open standards, Dual sourcing]
+  - label: Single supplier
+    note: One factory, one fire, no product.
+    bestFits: [Dual sourcing]
+  - label: Rework
+    note: Doing it twice and paying for it twice.
+    bestFits: [Poka-yoke, Root-cause analysis, Kaizen]
+  - label: Manual re-keying
+    note: The same data typed into three systems.
+    bestFits: [Automation, Process mapping]
+  - label: Slow order-to-cash
+    note: From order to payment takes weeks.
+    bestFits: [Value stream map, Lean, Automation]
+  - label: Too much WIP
+    note: Everything started, nothing finished.
+    bestFits: [Kanban, Stop-doing list]
+  # --- people ---
+  - label: Key-person risk
+    note: Only Dave knows how it works. Dave is on holiday.
+    bestFits: [Succession planning, Cross-training, Process mapping]
+  - label: Staff turnover
+    note: Onboarding never stops.
+    bestFits: [Stay interviews, Upskilling]
+  - label: Skills gap
+    note: The job changed; the training didn't.
+    bestFits: [Upskilling, Cross-training, Outsourcing]
+  - label: Burnout
+    note: Your best people, running on empty.
+    bestFits: [Workload caps, Automation, Cross-training]
+  - label: Hiring freeze
+    note: Same work, fewer hands, no new ones coming.
+    bestFits: [Automation, Cross-training, Outsourcing]
+  - label: Unclear roles
+    note: Everyone thought someone else had it.
+    bestFits: [RACI matrix, Decision rights]
+  # --- management & organisation ---
+  - label: Meeting overload
+    note: A meeting to plan the meeting.
+    bestFits: [Meeting audit, Decision rights]
+  - label: Silo mentality
+    note: "Not my department."
+    bestFits: [Squads, OKRs]
+  - label: Reorg fatigue
+    note: New org chart, same problems.
+    bestFits: [Change management, Kaizen]
+  - label: Decision paralysis
+    note: Another workshop, still no decision.
+    bestFits: [Decision rights, Stage-gate review]
+  - label: KPI theatre
+    note: Green dashboards, red reality.
+    bestFits: [Balanced scorecard, OKRs]
+  - label: Priority overload
+    note: Everything is P1, so nothing is.
+    bestFits: [Stop-doing list, OKRs]
+  - label: Approval queue
+    note: Three signatures to buy a stapler.
+    bestFits: [Delegated authority, RACI matrix]
+  - label: Shadow IT
+    note: Finance runs on someone's personal spreadsheet.
+    bestFits: [Service catalogue]
+  - label: Duplicated work
+    note: Three teams, one report, three versions.
+    bestFits: [Shared services, Process mapping]
+  - label: Strategy drift
+    note: The plan says one thing, the work does another.
+    bestFits: [OKRs, Balanced scorecard]
+  # --- risk ---
+  - label: Regulatory change
+    note: New rules, same deadline.
+    bestFits: [Horizon scanning, Scenario planning]
+  - label: Compliance audit
+    note: The auditors arrive on Monday.
+    bestFits: [Internal audit, Process mapping]
+  - label: Reputation hit
+    note: Trending, for all the wrong reasons.
+    bestFits: [Crisis comms, Root-cause analysis]
+  - label: Market shock
+    note: The forecast assumed normal.
+    bestFits: [Scenario planning, Cash-flow forecast]
+
+solutions:
+  # --- process & quality ---
+  - { name: Lean, tag: LEN, hint: "Cut every step the customer wouldn't pay for." }
+  - { name: Six Sigma, tag: SIX, hint: "Measure the variation, then squeeze it out (DMAIC)." }
+  - { name: Kaizen, tag: KZN, hint: "Small improvements, every day, by everyone." }
+  - { name: Poka-yoke, tag: POK, hint: "Mistake-proof the step so it can't be done wrong." }
+  - { name: Root-cause analysis, tag: RCA, hint: "Keep asking why until it stops being someone's fault." }
+  - { name: Process mapping, tag: MAP, hint: "Draw how the work really flows, warts and all." }
+  - { name: Value stream map, tag: VSM, hint: "Map order to delivery; most of it turns out to be waiting." }
+  - { name: Constraint theory, tag: TOC, hint: "Theory of Constraints: find the one bottleneck and work everything around it." }
+  - { name: Automation, tag: AUT, hint: "Let software do the dull, repetitive bits." }
+  # --- flow & supply ---
+  - { name: Just-in-time, tag: JIT, hint: "Make or buy only what's needed, when it's needed." }
+  - { name: Kanban, tag: KAN, hint: "Make the work visible and cap work in progress." }
+  - { name: Safety stock, tag: SAF, hint: "A buffer for when demand or delivery surprises you." }
+  - { name: Demand planning, tag: DMD, hint: "Forecast demand and plan supply to match it." }
+  - { name: Dual sourcing, tag: DUA, hint: "Qualify a second supplier before you need one." }
+  - { name: Open standards, tag: OPN, hint: "Choose formats and tools you can walk away from." }
+  - { name: Outsourcing, tag: OUT, hint: "Pay specialists for work that isn't core." }
+  # --- money ---
+  - { name: Cash-flow forecast, tag: CFF, hint: "Know which week the money runs out, before it does." }
+  - { name: Zero-based budgeting, tag: ZBB, hint: "Every cost justifies itself from zero, every cycle." }
+  - { name: Payment terms, tag: PAY, hint: "Get paid sooner, pay out later: negotiate both." }
+  - { name: Factoring, tag: FAC, hint: "Sell your invoices at a discount for cash today." }
+  - { name: Credit checks, tag: CRD, hint: "Check a customer can pay before you extend credit." }
+  - { name: Dunning, tag: DUN, hint: "Payment reminders: polite, then firm, then firmer." }
+  - { name: Stage-gate review, tag: GAT, hint: "Fund projects one stage at a time; stop the losers early." }
+  - { name: Change control, tag: CTL, hint: "Every extra goes through a priced, approved change request." }
+  # --- customers & pricing ---
+  - { name: Value-based pricing, tag: VBP, hint: "Price on the value to the customer, not cost plus." }
+  - { name: Dynamic pricing, tag: DYN, hint: "Adjust prices to demand, capacity and timing." }
+  - { name: Upselling, tag: UPS, hint: "Sell existing customers more of what they already value." }
+  - { name: Customer success, tag: CSM, hint: "Help customers get value early, so they stay." }
+  - { name: Retention offers, tag: RET, hint: "Give a wavering customer a reason to stay." }
+  - { name: Net Promoter loop, tag: NPS, hint: "Ask how likely they'd be to recommend you, act on it, tell them." }
+  # --- people ---
+  - { name: Cross-training, tag: XTR, hint: "Teach people each other's jobs." }
+  - { name: Succession planning, tag: SUC, hint: "Name and grow successors before anyone leaves." }
+  - { name: Upskilling, tag: UPK, hint: "Train the people you have for the work you need." }
+  - { name: Stay interviews, tag: STY, hint: "Ask good people why they stay, before they stop." }
+  - { name: Workload caps, tag: WLC, hint: "Limit work in progress per person, not just per team." }
+  # --- management & organisation ---
+  - { name: OKRs, tag: OKR, hint: "A few ambitious objectives, each with measurable key results." }
+  - { name: Balanced scorecard, tag: BSC, hint: "Track finance, customers, process and learning together." }
+  - { name: RACI matrix, tag: RCI, hint: "Who's Responsible, Accountable, Consulted and Informed." }
+  - { name: Decision rights, tag: DEC, hint: "Agree who decides what, and by when." }
+  - { name: Delegated authority, tag: DLA, hint: "Let people approve within limits without asking upwards." }
+  - { name: Meeting audit, tag: MTG, hint: "Cancel the meetings nobody would miss." }
+  - { name: Stop-doing list, tag: STP, hint: "Decide what you'll no longer do. Then actually stop." }
+  - { name: Squads, tag: SQD, hint: "Small cross-functional teams that own an outcome end to end." }
+  - { name: Shared services, tag: SHS, hint: "Run common back-office work once, centrally." }
+  - { name: Service catalogue, tag: SVC, hint: "Offer approved tools fast enough that nobody goes rogue." }
+  - { name: Change management, tag: CHG, hint: "Bring the people along, not just the org chart." }
+  # --- risk ---
+  - { name: Scenario planning, tag: SCN, hint: "Rehearse several futures, not just the hopeful one." }
+  - { name: Horizon scanning, tag: HZN, hint: "Spot rule changes and trends before they arrive." }
+  - { name: Internal audit, tag: AUD, hint: "Find the problems before the regulator does." }
+  - { name: Crisis comms, tag: CRC, hint: "Say what happened, what you're doing, and when you'll update." }

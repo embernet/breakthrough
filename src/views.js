@@ -17,7 +17,7 @@ function gamePage({ user, portalUrl, version, modes = [], defaultMode = '', sele
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>Breakthrough</title>
-<meta name="description" content="Problems rise, solutions fall. A falling-block innovation puzzle.">
+<meta name="description" content="Problems rise, solutions fall. A falling-block problem-solving puzzle.">
 <link rel="icon" href="/favicon.svg">
 <link rel="stylesheet" href="/css/app.css?v=${v}">
 </head>

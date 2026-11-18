@@ -11,7 +11,7 @@ slot of 1–4 gaps. You steer four-cell solution pieces, each carrying a solutio
 |---|---|---|
 | **Software Engineering** (default) | tech debt, scaling, reliability, design smells | design patterns and architecture techniques ("pattern") |
 | **Algo Trading** | market, execution and quant/ML research pitfalls | strategies, validation methods and risk controls ("technique") |
-| **General innovation (TRIZ)** | everyday organisation/tech problems | the 40 TRIZ inventive principles ("principle") |
+| **Business Operations** | cash, customers, supply, people, management and risk headaches | the management and operations toolkit ("tactic") |
 
 - Complete a row holding a problem and you **break** it. The card reads
   "Cache stampede, solved with Request coalescing", credited to the piece that
@@ -82,7 +82,10 @@ URLs and paths are recorded in `~/git/horizon-infra/inventory.md`.
 ## Modes
 
 Each mode is **one YAML file**. The built-in ones are in `modes/`:
-`software-engineering.yaml`, `algo-trading.yaml`, `innovation.yaml`.
+`software-engineering.yaml`, `algo-trading.yaml`, `business-operations.yaml`.
+(The original TRIZ mode, `innovation`, was retired. Its old scores stay in the
+database but no longer appear, and a saved or linked `innovation` choice falls
+back to the default.)
 
 Files in `DATA_DIR/modes/` (e.g. `data/modes/` in dev) **add** modes, or **replace**
 a built-in one that has the same `id`. They are re-checked on every request, so
@@ -102,6 +105,7 @@ name: Our Q3 problems      # required; shown in the dropdown (max 40)
 description: A warm-up for the planning workshop.   # optional, shown on the start card
 solutionNoun: idea         # optional: what a solution is called ("pattern", "technique", ...). Default "solution"
 solutionNounPlural: ideas  # optional; default noun + "s"
+order: 10                  # optional whole number: dropdown position (lower first; the default mode is always first)
 
 problems:                  # required, at least 5
   - label: Slow onboarding # required, max 18 characters (it is drawn on a 10-cell row)

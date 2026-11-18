@@ -52,6 +52,11 @@ function validateMode(doc) {
   if (description.length > LIMITS.description) err(`\`description\` is ${description.length} characters (max ${LIMITS.description})`);
   const noun = str(doc.solutionNoun) || 'solution';
   const nounPlural = str(doc.solutionNounPlural) || noun + 's';
+  let order = 100;
+  if (doc.order != null) {
+    if (!Number.isInteger(doc.order)) err('`order` must be a whole number (lower = earlier in the dropdown)');
+    else order = doc.order;
+  }
   if (noun.length > LIMITS.noun || nounPlural.length > LIMITS.noun) err(`\`solutionNoun\` / \`solutionNounPlural\` max ${LIMITS.noun} characters`);
 
   // solutions first, so bestFits can be checked against them
@@ -119,7 +124,7 @@ function validateMode(doc) {
     e.issues = errs;
     throw e;
   }
-  return { id, name, description, solutionNoun: noun, solutionNounPlural: nounPlural, problems, solutions };
+  return { id, name, description, order, solutionNoun: noun, solutionNounPlural: nounPlural, problems, solutions };
 }
 
 function listYaml(dir) {
@@ -181,12 +186,12 @@ function createModes({ dataDir, defaultMode = 'software-engineering', log = cons
     return cache.value;
   }
 
-  // Display order: the default first, then the others by name.
+  // Display order: the default first, then by `order`, then by name.
   function list() {
     const { modes } = load();
     const def = defaultId();
     return [...modes.values()]
-      .sort((a, b) => (a.id === def ? -1 : b.id === def ? 1 : a.name.localeCompare(b.name)))
+      .sort((a, b) => (a.id === def ? -1 : b.id === def ? 1 : a.order - b.order || a.name.localeCompare(b.name)))
       .map(({ id, name, description, solutionNoun, solutionNounPlural, source, problems, solutions }) =>
         ({ id, name, description, solutionNoun, solutionNounPlural, source, problems: problems.length, solutions: solutions.length }));
   }

@@ -95,7 +95,8 @@ test('game page has the mode dropdown, default first, honours ?mode=', async () 
   let html = await (await fetch(base + '/', { headers: { cookie } })).text();
   assert.match(html, /<select id="mode-select"[^>]*><option value="software-engineering" selected>Software Engineering<\/option>/);
   assert.match(html, /<option value="algo-trading">Algo Trading<\/option>/);
-  assert.match(html, /<option value="innovation">General innovation \(TRIZ\)<\/option>/);
+  assert.match(html, /<option value="algo-trading">Algo Trading<\/option><option value="business-operations">Business Operations<\/option><\/select>/);
+  assert.doesNotMatch(html, /innovation/);
   assert.match(html, /data-default-mode="software-engineering"/);
   assert.match(html, /credited to the <span class="noun">pattern<\/span>/);
   html = await (await fetch(base + '/?mode=algo-trading', { headers: { cookie } })).text();
@@ -104,13 +105,16 @@ test('game page has the mode dropdown, default first, honours ?mode=', async () 
   assert.match(html, /credited to the <span class="noun">technique<\/span>/);
   html = await (await fetch(base + '/?mode=%3Cscript%3E', { headers: { cookie } })).text();
   assert.match(html, /data-url-mode=""/, 'unknown ?mode is ignored');
+  html = await (await fetch(base + '/?mode=innovation', { headers: { cookie } })).text();
+  assert.match(html, /data-url-mode=""/, 'a retired mode falls back to the default');
+  assert.match(html, /<option value="software-engineering" selected>/);
 });
 
 test('modes API: list, one mode, decks alias, unknown', async () => {
   const cookie = await login('Mode Reader');
   const list = await (await fetch(base + '/api/modes', { headers: { cookie } })).json();
   assert.equal(list.default, 'software-engineering');
-  assert.deepEqual(list.modes.map((m) => m.id), ['software-engineering', 'algo-trading', 'innovation']);
+  assert.deepEqual(list.modes.map((m) => m.id), ['software-engineering', 'algo-trading', 'business-operations']);
   const at = await (await fetch(base + '/api/modes/algo-trading', { headers: { cookie } })).json();
   assert.equal(at.name, 'Algo Trading');
   assert.equal(at.solutionNoun, 'technique');
@@ -118,8 +122,9 @@ test('modes API: list, one mode, decks alias, unknown', async () => {
   assert.ok(at.solutions.every((x) => x.name && x.short && x.hint));
   const d = await (await fetch(base + '/api/decks', { headers: { cookie } })).json();
   assert.equal(d.id, 'software-engineering');
-  const d2 = await (await fetch(base + '/api/decks?mode=innovation', { headers: { cookie } })).json();
-  assert.ok(d2.solutions.some((x) => x.name === 'Do it in reverse'));
+  const d2 = await (await fetch(base + '/api/decks?mode=business-operations', { headers: { cookie } })).json();
+  assert.ok(d2.solutions.some((x) => x.name === 'Kaizen'));
+  assert.equal((await fetch(base + '/api/modes/innovation', { headers: { cookie } })).status, 404);
   assert.equal((await fetch(base + '/api/modes/nope', { headers: { cookie } })).status, 404);
   assert.equal((await fetch(base + '/api/scores?mode=nope', { headers: { cookie } })).status, 404);
 });
@@ -151,22 +156,38 @@ test('scores are per mode', async () => {
   assert.deepEqual(j.mode, { id: 'algo-trading', name: 'Algo Trading' });
   assert.equal(j.top[0].displayName, 'Quant');
   assert.equal(j.top[0].rightTools, 2);
-  r = await post(b, game({ mode: 'innovation', score: 777 }));
+  r = await post(b, game({ mode: 'business-operations', score: 777 }));
   assert.equal(r.status, 201);
 
   const at = await (await fetch(base + '/api/scores?mode=algo-trading', { headers: { cookie: b } })).json();
   assert.deepEqual(at.top.map((x) => x.displayName), ['Quant']);
   assert.equal(at.me, null, 'Architect has not played this mode');
-  const tr = await (await fetch(base + '/api/scores?mode=innovation', { headers: { cookie: a } })).json();
+  const tr = await (await fetch(base + '/api/scores?mode=business-operations', { headers: { cookie: a } })).json();
   assert.deepEqual(tr.top.map((x) => x.displayName), ['Architect']);
   const se = await (await fetch(base + '/api/scores', { headers: { cookie: a } })).json();
   assert.equal(se.mode.id, 'software-engineering');
   assert.ok(!se.top.some((x) => x.displayName === 'Quant'));
 
   await new Promise((res) => setTimeout(res, 2100)); // flood guard
+  r = await post(a, game({ mode: 'innovation' })); // retired mode
+  assert.equal(r.status, 400);
+  await new Promise((res) => setTimeout(res, 2100));
   r = await post(a, game({ mode: 'no-such-mode' }));
   assert.equal(r.status, 400);
   assert.equal((await r.json()).error, 'unknown mode');
+});
+
+test('score rows from a retired mode stay in the DB but never surface', async () => {
+  const c = await login('Old TRIZ fan');
+  db.prepare(`INSERT INTO scores (user_id, display_name, mode, score, level, problems_solved, perfect_fits, best_combo, solution_rows, pieces, duration_ms)
+    VALUES ('local:ghost', 'Ghost', 'innovation', 99999, 1, 0, 0, 0, 0, 10, 60000)`).run();
+  assert.equal((await fetch(base + '/api/scores?mode=innovation', { headers: { cookie: c } })).status, 404);
+  for (const m of ['software-engineering', 'algo-trading', 'business-operations']) {
+    const r = await fetch(base + '/api/scores?mode=' + m, { headers: { cookie: c } });
+    assert.equal(r.status, 200);
+    assert.ok(!(await r.json()).top.some((x) => x.displayName === 'Ghost'), m);
+  }
+  assert.equal(db.prepare("SELECT COUNT(*) n FROM scores WHERE mode = 'innovation'").get().n, 1, 'kept, not deleted');
 });
 
 test('migration v2: existing scores become innovation-mode scores', () => {

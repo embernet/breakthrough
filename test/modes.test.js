@@ -20,9 +20,9 @@ test('the built-in modes are all valid', () => {
   const { modes, errors } = reg.all();
   assert.deepEqual(errors, [], JSON.stringify(errors));
   assert.deepEqual(logs, []);
-  assert.deepEqual([...modes.keys()].sort(), ['algo-trading', 'innovation', 'software-engineering']);
+  assert.deepEqual([...modes.keys()].sort(), ['algo-trading', 'business-operations', 'software-engineering']);
   assert.equal(reg.defaultId(), 'software-engineering');
-  assert.equal(reg.list()[0].id, 'software-engineering', 'default listed first');
+  assert.deepEqual(reg.list().map((m) => m.id), ['software-engineering', 'algo-trading', 'business-operations']);
 
   const se = reg.get('software-engineering');
   assert.equal(se.name, 'Software Engineering');
@@ -42,18 +42,25 @@ test('the built-in modes are all valid', () => {
     assert.ok(at.solutions.some((s) => s.name === name), name);
   }
 
-  const tr = reg.get('innovation');
-  assert.equal(tr.name, 'General innovation (TRIZ)');
-  assert.equal(tr.solutions.length, 40);
-  assert.equal(tr.solutionNoun, 'principle');
+  const bo = reg.get('business-operations');
+  assert.equal(bo.name, 'Business Operations');
+  assert.equal(bo.solutionNoun, 'tactic');
+  for (const label of ['Cash-flow crunch', 'Late payers', 'Customer churn', 'Stockouts', 'Key-person risk', 'KPI theatre', 'Regulatory change']) {
+    assert.ok(bo.problems.some((p) => p.label === label), label);
+  }
+  for (const name of ['Lean', 'Six Sigma', 'Kanban', 'Zero-based budgeting', 'RACI matrix', 'Factoring', 'Stage-gate review']) {
+    assert.ok(bo.solutions.some((s) => s.name === name), name);
+  }
+  assert.deepEqual(bo.problems.find((p) => p.label === 'Single supplier').bestFits, ['Dual sourcing']);
+  assert.equal(reg.get('innovation'), null, 'the TRIZ mode was retired');
 
   for (const m of modes.values()) {
     assert.ok(m.problems.length >= 30, m.id + ' problems');
     assert.ok(m.problems.every((p) => p.label.length <= LIMITS.label));
     assert.ok(m.solutions.every((s) => s.name.length <= LIMITS.solution && /^[A-Z0-9]{2,4}$/.test(s.short) && s.hint));
   }
-  // SE and trading problems all have best fits
-  for (const id of ['software-engineering', 'algo-trading']) {
+  // every built-in problem has 1-3 best fits
+  for (const id of ['software-engineering', 'algo-trading', 'business-operations']) {
     assert.ok(reg.get(id).problems.every((p) => p.bestFits.length >= 1 && p.bestFits.length <= 3), id);
   }
 });
@@ -86,6 +93,7 @@ test('validation reports every problem clearly', () => {
   });
   assert.throws(() => validateMode(doc({ solutions: sols(2) })), /at least 5 solutions/);
   assert.throws(() => validateMode(doc({ name: undefined })), /`name` is required/);
+  assert.throws(() => validateMode(doc({ order: 'first' })), /`order` must be a whole number/);
   assert.throws(() => validateMode('just a string'), /YAML mapping/);
   // bestFits match case-insensitively and are stored by the canonical name
   const v = validateMode(doc({ problems: [...probs(4), { label: 'Case', bestFits: ['fix 3'] }] }));
@@ -132,7 +140,7 @@ test('DATA_DIR/modes adds modes, overrides by id, skips bad files, re-reads with
 
 test('DEFAULT_MODE picks the default, with a fallback when it is missing', () => {
   assert.equal(createModes({ dataDir: tmp(), defaultMode: 'algo-trading' }).defaultId(), 'algo-trading');
-  assert.equal(createModes({ dataDir: tmp(), defaultMode: 'algo-trading' }).list()[0].id, 'algo-trading');
+  assert.deepEqual(createModes({ dataDir: tmp(), defaultMode: 'algo-trading' }).list().map((m) => m.id), ['algo-trading', 'software-engineering', 'business-operations']);
   assert.equal(createModes({ dataDir: tmp(), defaultMode: 'nope' }).defaultId(), 'software-engineering');
   // no valid modes at all: null default, and it says so
   const logs = [];

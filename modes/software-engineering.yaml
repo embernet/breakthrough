@@ -2,6 +2,7 @@
 # File format: see README.md, "Make your own mode".
 id: software-engineering
 name: Software Engineering
+order: 1
 description: Tech debt, scaling and reliability problems meet design patterns and architecture techniques.
 solutionNoun: pattern
 solutionNounPlural: patterns

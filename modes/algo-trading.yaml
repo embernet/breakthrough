@@ -4,6 +4,7 @@
 # File format: see README.md, "Make your own mode".
 id: algo-trading
 name: Algo Trading
+order: 2
 description: Market, execution and quant-research pitfalls meet trading strategies, validation methods and risk controls.
 solutionNoun: technique
 solutionNounPlural: techniques
