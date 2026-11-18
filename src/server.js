@@ -13,7 +13,7 @@ const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
 function createApp(config = loadConfig()) {
   const db = openDb(config.dataDir);
-  const auth = createAuth({ db, appName: config.appName, config });
+  const auth = createAuth({ db, appName: 'Breakthrough', config: config.auth });
   const scores = createScores(db);
   const lastSubmit = new Map(); // user id -> ms, a light flood guard
 
@@ -23,7 +23,7 @@ function createApp(config = loadConfig()) {
 
   app.use((req, res, next) => {
     res.set({
-      'Content-Security-Policy': "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
+      'Content-Security-Policy': "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
       'X-Content-Type-Options': 'nosniff',
       'Referrer-Policy': 'same-origin',
     });
@@ -84,14 +84,21 @@ function createApp(config = loadConfig()) {
     res.status(status).type('text').send(msg);
   });
 
-  return { app, db, config };
+  return { app, db, config, auth };
 }
 
 if (require.main === module) {
-  const config = loadConfig();
+  let config;
+  try {
+    config = loadConfig();
+  } catch (err) {
+    console.error(`FATAL: settings: ${err.message}`);
+    process.exit(1);
+  }
   const { app, db } = createApp(config);
   const server = app.listen(config.port, config.host, () => {
-    console.log(`breakthrough ${pkg.version} on http://${config.host}:${config.port} (data ${config.dataDir})`);
+    const a = config.auth;
+    console.log(`breakthrough ${pkg.version} on http://${config.host}:${config.port} (data ${config.dataDir}; login: local=${a.local ? 'on' : 'off'}, sso=${a.sso ? 'on' : 'off'})`);
   });
   const stop = () => server.close(() => { db.close(); process.exit(0); });
   process.on('SIGTERM', stop);

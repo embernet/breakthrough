@@ -9,13 +9,16 @@ const { loadConfig } = require('../src/config');
 const { validateSubmission } = require('../src/scores');
 const E = require('../public/js/engine.js');
 
-let server, base, dataDir, db;
+let server, base, dataDir, db, auth;
+const PW = 'test-password-123';
+let userSeq = 0;
 
 test.before(async () => {
   dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'breakthrough-test-'));
   const config = loadConfig({ DATA_DIR: dataDir, PORT: '8195', PORTAL_URL: 'https://horizon.example/' });
   const made = createApp(config);
   db = made.db;
+  auth = made.auth;
   server = made.app.listen(0, '127.0.0.1');
   await new Promise((r) => server.once('listening', r));
   base = `http://127.0.0.1:${server.address().port}`;
@@ -26,11 +29,14 @@ test.after(() => {
   fs.rmSync(dataDir, { recursive: true, force: true });
 });
 
+// Each call makes a fresh local account with this display name and signs in.
 async function login(name) {
-  const res = await fetch(base + '/login', {
+  const username = `player${++userSeq}`;
+  auth.store.addLocalUser(username, name, PW);
+  const res = await fetch(base + '/local', {
     method: 'POST', redirect: 'manual',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ displayName: name, next: '/' }),
+    body: new URLSearchParams({ username, password: PW, next: '/' }),
   });
   assert.equal(res.status, 303);
   const cookie = res.headers.get('set-cookie').split(';')[0];
@@ -58,17 +64,18 @@ test('logged out: / redirects to /login, /api is 401', async () => {
   assert.equal(r.headers.get('location'), '/login?next=%2F');
   const a = await fetch(base + '/api/decks');
   assert.equal(a.status, 401);
-  assert.deepEqual(await a.json(), { error: 'login required' });
+  assert.deepEqual(await a.json(), { error: 'sign in required' });
   const l = await fetch(base + '/login');
   assert.equal(l.status, 200);
-  assert.match(await l.text(), /Display name/);
+  assert.match(await l.text(), /action="\/local"/);
 });
 
 test('login rejects open redirects', async () => {
-  const res = await fetch(base + '/login', {
+  auth.store.addLocalUser('eve', 'Eve', PW);
+  const res = await fetch(base + '/local', {
     method: 'POST', redirect: 'manual',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ displayName: 'Eve', next: '//evil.example/' }),
+    body: new URLSearchParams({ username: 'eve', password: PW, next: '//evil.example/' }),
   });
   assert.equal(res.headers.get('location'), '/');
 });
@@ -138,7 +145,7 @@ test('scores: flood guard and content type', async () => {
 test('logout ends the session', async () => {
   const c = await login('Leaver');
   const r = await fetch(base + '/logout', { headers: { cookie: c }, redirect: 'manual' });
-  assert.equal(r.status, 303);
+  assert.equal(r.status, 302);
   assert.equal((await fetch(base + '/api/scores', { headers: { cookie: c } })).status, 401);
 });
 

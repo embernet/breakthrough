@@ -14,6 +14,7 @@ services:
   app:
     build: .
     restart: unless-stopped
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"   # host user, so the data dir stays theirs
     ports:
       - "${BREAKTHROUGH_PORT:-8195}:${BREAKTHROUGH_PORT:-8195}"
     environment:
@@ -22,13 +23,17 @@ services:
       PUBLIC_URL: "${PUBLIC_URL:-}"
       PORTAL_URL: "${PORTAL_URL:-}"
       TRUST_PROXY: "${TRUST_PROXY:-}"
-      # Login standard (used by the shared auth module; the stub ignores them)
+      # Login standard (shared auth module, src/auth/README.md)
       AUTH_LOCAL: "${AUTH_LOCAL:-on}"
       AUTH_SSO: "${AUTH_SSO:-off}"
       SSO_ISSUER: "${SSO_ISSUER:-https://tig-sso.grlab.co.uk/realms/tig}"
       SSO_CLIENT_ID: "${SSO_CLIENT_ID:-}"
-      SSO_CLIENT_SECRET: "${SSO_CLIENT_SECRET:-}"
+      SSO_CLIENT_SECRET_FILE: "${SSO_CLIENT_SECRET_FILE:-}"
+      LOCAL_ADMIN_USERS: "${LOCAL_ADMIN_USERS:-}"
+      # trust the host's certificate store (has ISRG Root YR, needed for TIG-SSO; see horizon-infra inventory)
+      NODE_USE_SYSTEM_CA: "1"
       SSO_ADMIN_GROUP: "${SSO_ADMIN_GROUP:-}"
       SESSION_DAYS: "${SESSION_DAYS:-7}"
     volumes:
       - ${BREAKTHROUGH_DATA_DIR:-./data}:/data
+      - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro

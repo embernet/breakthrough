@@ -1,8 +1,8 @@
 'use strict';
-// Configuration from the environment. Everything (including the login
-// standard's AUTH_* / SSO_* / SESSION_DAYS settings) is passed to createAuth as
-// `config`, so the shared auth module can read what it needs from here.
+// Configuration from the environment. The login settings (AUTH_* / SSO_* /
+// SESSION_DAYS / LOCAL_ADMIN_USERS) are parsed by src/auth/config.js.
 const path = require('node:path');
+const { loadAuthConfig } = require('./auth/config');
 
 function trimSlash(u) {
   return u ? String(u).replace(/\/+$/, '') : '';
@@ -19,16 +19,9 @@ function loadConfig(env = process.env) {
     publicUrl: trimSlash(env.PUBLIC_URL),
     portalUrl: trimSlash(env.PORTAL_URL),
     trustProxy: env.TRUST_PROXY || '',
-    // Login standard (see horizon-infra design, section 2). The stub ignores
-    // these; the shared auth module uses them.
-    authLocal: (env.AUTH_LOCAL || 'on').toLowerCase() !== 'off',
-    authSso: (env.AUTH_SSO || 'off').toLowerCase() === 'on',
-    ssoIssuer: env.SSO_ISSUER || 'https://tig-sso.grlab.co.uk/realms/tig',
-    ssoClientId: env.SSO_CLIENT_ID || '',
-    ssoClientSecret: env.SSO_CLIENT_SECRET || '',
-    ssoAdminGroup: env.SSO_ADMIN_GROUP || '',
-    sessionDays: Number(env.SESSION_DAYS || 7),
-    env: { ...env },
+    // Login standard (horizon-infra design §2), read by the shared auth module.
+    // Throws on impossible settings (both modes off, SSO without a client ID, ...).
+    auth: loadAuthConfig(env),
   };
 }
 

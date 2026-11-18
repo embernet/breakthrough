@@ -105,26 +105,21 @@ problems solved, and a score under a generous ceiling computed from the engine's
 own scoring rules (`maxPlausibleScore`). There is also a 2-second per-user flood
 guard. The aim is to keep junk off the leaderboard, not to stop a determined cheat.
 
-## Auth: how the shared module plugs in
+## Login
 
-`src/auth/index.js` is a **stub** ("pretend login": you type a display name, and it's
-kept in an in-memory session behind a cookie, so a restart logs everyone out).
-The shared auth module (local users + TIG-SSO OIDC) replaces the whole
-`src/auth/` directory with no other changes, as long as it keeps this interface:
+`src/auth/` is the **shared Horizon login module**, copied unchanged from the
+`horizon` portal repo (its `src/auth/README.md` is the reference). By default only local
+accounts are on; `AUTH_SSO=on` adds TIG-SSO, with local accounts then at `/local`
+while `AUTH_LOCAL=on`. Fix bugs in the portal's copy first, then re-copy.
 
-```js
-// createAuth({ db, appName, config }) -> { router, attachUser, requireUser }
-//   router:      express.Router mounting /login, /local, /auth/callback, /logout
-//   attachUser:  middleware setting req.user (or null)
-//   requireUser: HTML without a user -> 302 /login?next=<url>; /api/* -> 401 JSON
-// req.user = { id, username, displayName, source: 'local'|'sso', isAdmin }
-// db: the app's node:sqlite DatabaseSync (auth creates its own auth_* tables)
-// config: everything from src/config.js, including config.env (raw environment)
+```bash
+scripts/user.sh add mark "Mark Burnett"   # add or reset a local account (prompts for the password)
+scripts/user.sh list
 ```
 
 `src/server.js` mounts `attachUser` then `router` globally, and guards `/` and
-`/api/*` with `requireUser`. Scores are keyed on `req.user.id` and show
-`req.user.displayName`.
+`/api/*` with `requireUser`. Scores are keyed on `req.user.id` (`local:<username>`
+or `sso:<sub>`) and show `req.user.displayName`.
 
 ## Layout
 
@@ -135,7 +130,7 @@ src/db.js            node:sqlite, migrations (PRAGMA user_version)
 src/scores.js        submission validation + leaderboard queries
 src/decks.js         YAML deck loading (default + DATA_DIR override)
 src/views.js         HTML shell for the game page
-src/auth/index.js    STUB auth (replaced by the shared module)
+src/auth/            shared Horizon login module (copied from the horizon repo)
 public/js/engine.js  pure game logic, no DOM (browser global + require())
 public/js/game.js    canvas renderer, effects, input, sound, UI
 public/css/app.css   styles (light/dark via prefers-color-scheme)
