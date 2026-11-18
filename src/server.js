@@ -11,8 +11,20 @@ const pkg = require('../package.json');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
+// Asset version = hash of the files the page loads, so any change to them gets
+// new URLs and browsers can't mix a cached old script with a new page.
+function assetVersion() {
+  const fs = require('node:fs');
+  const h = require('node:crypto').createHash('sha256');
+  for (const f of ['js/engine.js', 'js/game.js', 'css/app.css']) {
+    try { h.update(fs.readFileSync(path.join(PUBLIC_DIR, f))); } catch { /* missing file: still start */ }
+  }
+  return h.digest('hex').slice(0, 10);
+}
+
 function createApp(config = loadConfig()) {
   const db = openDb(config.dataDir);
+  const assetV = assetVersion();
   const auth = createAuth({ db, appName: 'Breakthrough', config: config.auth });
   const scores = createScores(db);
   const modes = createModes({ dataDir: config.dataDir, defaultMode: config.defaultMode, log: config.log || console.error });
@@ -52,7 +64,7 @@ function createApp(config = loadConfig()) {
     const list = modes.list();
     const asked = typeof req.query.mode === 'string' ? req.query.mode : '';
     res.type('html').send(views.gamePage({
-      user: req.user, portalUrl: config.portalUrl, version: pkg.version,
+      user: req.user, portalUrl: config.portalUrl, version: assetV,
       modes: list, defaultMode: modes.defaultId(), selectedMode: list.some((m) => m.id === asked) ? asked : '',
     }));
   });
