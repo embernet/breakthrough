@@ -1,0 +1,20 @@
+{
+  "name": "breakthrough",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Breakthrough: problems rise, solutions fall. A falling-block innovation puzzle for the Horizon suite.",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "js-yaml": "^4.1.0"
+  }
+}
