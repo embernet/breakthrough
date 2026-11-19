@@ -1,6 +1,6 @@
 'use strict';
 // Configuration from the environment. The login settings (AUTH_* / SSO_* /
-// SESSION_DAYS / LOCAL_ADMIN_USERS) are parsed by src/auth/config.js.
+// SESSION_DAYS / LOCAL_ADMIN_USERS / SSO_ADMIN_USERS) are parsed by src/auth/config.js.
 const path = require('node:path');
 const { loadAuthConfig } = require('./auth/config');
 

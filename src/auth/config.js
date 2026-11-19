@@ -10,6 +10,7 @@
 //   SSO_CLIENT_SECRET_FILE  confidential client only; omit for a public client
 //   PUBLIC_URL              this app's external URL; redirect URI = PUBLIC_URL/auth/callback
 //   SSO_ADMIN_GROUP         optional AD group whose members are admins
+//   SSO_ADMIN_USERS         optional comma list of TIG-SSO usernames who are admins
 //   LOCAL_ADMIN_USERS       optional comma list of local usernames who are admins
 //   SESSION_DAYS            app session length in days (default 7)
 
@@ -39,6 +40,7 @@ function loadAuthConfig(env = process.env) {
     publicUrl: (env.PUBLIC_URL || '').replace(/\/+$/, ''),
     adminGroup: env.SSO_ADMIN_GROUP || '',
     localAdmins: (env.LOCAL_ADMIN_USERS || '').split(',').map((s) => s.trim()).filter(Boolean),
+    ssoAdmins: (env.SSO_ADMIN_USERS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
     sessionDays: Number(env.SESSION_DAYS || 7),
   };
 

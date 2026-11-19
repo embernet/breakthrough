@@ -22,6 +22,9 @@ app.get('/', auth.requireUser, handler);   // HTML -> 302 /login?next=..., /api/
 ```
 
 `req.user = { id, username, displayName, source: 'local' | 'sso', isAdmin }`.
+
+`auth.sameOrigin(req)` tells an app's own POST routes whether a form came
+from this site; refuse it (403) when it did not, as `/local` and `/logout` do.
 `id` is `local:<username>` or `sso:<sub>`, so the two kinds never collide.
 
 Needs: Node 24 (`node:sqlite`), `express` 5, `openid-client` 6. Tables are
@@ -38,6 +41,7 @@ created in the app's database, prefixed `auth_`.
 | `SSO_CLIENT_SECRET_FILE` | | confidential client only; a file path, never the secret itself |
 | `PUBLIC_URL` | | required with SSO; `https://…` or `http://localhost:<port>` |
 | `SSO_ADMIN_GROUP` | | SSO users in this AD group get `isAdmin` |
+| `SSO_ADMIN_USERS` | | comma list of SSO usernames who get `isAdmin` (beside the group) |
 | `LOCAL_ADMIN_USERS` | | comma list of local usernames with `isAdmin` |
 | `SESSION_DAYS` | `7` | 1–30 |
 
@@ -50,7 +54,7 @@ Both modes off: `loadAuthConfig` throws and the app should refuse to start.
 | `GET /login` | local form | redirect to TIG-SSO (keeps `next`) |
 | `GET/POST /local` | local form / sign-in | the same only if `AUTH_LOCAL=on`, else 404 |
 | `GET /auth/callback` | 404 | checks state cookie, PKCE, nonce, ID token |
-| `/logout` | ends the app session | `?everywhere=1` (or form field) also ends TIG-SSO |
+| `/logout` | ends the app session, then shows "You're signed out" | also ends a TIG-SSO user's TIG-SSO session |
 
 - Sessions are server-side; the cookie (`<app>_sid`, HttpOnly, SameSite=Lax,
   Secure on https) holds a random token stored only as a SHA-256.

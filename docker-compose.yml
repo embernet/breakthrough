@@ -35,6 +35,7 @@ services:
       # trust the host's certificate store (e.g. newer roots an SSO issuer may chain to)
       NODE_USE_SYSTEM_CA: "1"
       SSO_ADMIN_GROUP: "${SSO_ADMIN_GROUP:-}"
+      SSO_ADMIN_USERS: "${SSO_ADMIN_USERS:-}"
       SESSION_DAYS: "${SESSION_DAYS:-7}"
     volumes:
       - ${BREAKTHROUGH_DATA_DIR:-./data}:/data

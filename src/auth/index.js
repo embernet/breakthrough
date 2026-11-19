@@ -9,6 +9,11 @@
 //   req.user = { id, username, displayName, source: 'local'|'sso', isAdmin }
 //
 // Routes:  /login  /local  /auth/callback  /logout
+//
+// Sign-out ends this app's session and, for a TIG-SSO user, the TIG-SSO
+// session too (one "Sign out"; signing out of this app alone would only sign
+// the user straight back in). Afterwards the next page shows "You're signed
+// out" instead of starting a new sign-in.
 //   SSO off:  /login = local form; /local = same; /auth/callback = 404
 //   SSO on:   /login -> TIG-SSO; /local = local form only if AUTH_LOCAL=on, else 404
 
@@ -47,9 +52,18 @@ function createAuth({ db, appName, config }) {
   const cookieBase = () =>
     `Path=/; HttpOnly; SameSite=Lax${cfg.secureCookies ? '; Secure' : ''}`;
 
+  // A short-lived marker that the user has just signed out, so the next page
+  // they land on (here, or back from TIG-SSO's logout) says so rather than
+  // starting a new sign-in at once. Any sign-in clears it.
+  const outCookie = `${cookieName}_out`;
+  const markSignedOut = (res) => res.append('Set-Cookie', `${outCookie}=1; Max-Age=600; ${cookieBase()}`);
+  const clearSignedOut = (res) => res.append('Set-Cookie', `${outCookie}=; Max-Age=0; ${cookieBase()}`);
+  const justSignedOut = (req) => parseCookies(req.headers.cookie)[outCookie] === '1';
+
   function setSession(res, user, idToken) {
     const token = store.createSession(user, cfg.sessionDays, idToken);
     res.append('Set-Cookie', `${cookieName}=${token}; Max-Age=${cfg.sessionDays * 86400}; ${cookieBase()}`);
+    clearSignedOut(res);
   }
   function clearSession(req, res) {
     store.deleteSession(parseCookies(req.headers.cookie)[cookieName]);
@@ -95,6 +109,17 @@ function createAuth({ db, appName, config }) {
     // originalUrl, not path: inside a router mounted at /api, req.path has lost the prefix.
     const pathname = req.originalUrl.split('?')[0];
     if (pathname === '/api' || pathname.startsWith('/api/')) return res.status(401).json({ error: 'sign in required' });
+    if (req.method === 'GET' && justSignedOut(req)) {
+      clearSignedOut(res);
+      return res.status(200).set('Cache-Control', 'no-store').type('html').send(messagePage({
+        appName,
+        title: 'You\'re signed out',
+        body: cfg.sso
+          ? 'You are signed out of this app and of TIG-SSO. Other Horizon apps you opened may keep you signed in until their own sessions end.'
+          : 'You are signed out of this app.',
+        links: [['Sign in again', `/login?next=${encodeURIComponent(safeNext(req.originalUrl))}`]],
+      }));
+    }
     return res.redirect(302, `/login?next=${encodeURIComponent(safeNext(req.originalUrl))}`);
   }
 
@@ -111,6 +136,7 @@ function createAuth({ db, appName, config }) {
 
   router.get('/login', async (req, res, next) => {
     if (req.user) return res.redirect(302, safeNext(req.query.next));
+    clearSignedOut(res); // asking to sign in again ends the "signed out" page
     if (!cfg.sso) return showLocalForm(req, res);
     try {
       const { url, state, verifier, nonce } = await oidc.startLogin();
@@ -184,7 +210,9 @@ function createAuth({ db, appName, config }) {
         username: claims.username,
         displayName: claims.displayName,
         source: 'sso',
-        isAdmin: Boolean(cfg.adminGroup) && claims.groups.includes(cfg.adminGroup),
+        // An admin by AD group, or named one by username (SSO_ADMIN_USERS).
+        isAdmin: (Boolean(cfg.adminGroup) && claims.groups.includes(cfg.adminGroup))
+          || (cfg.ssoAdmins || []).includes(String(claims.username || '').toLowerCase()),
       }, idToken);
       return res.redirect(302, safeNext(pending.next));
     } catch (err) {
@@ -193,13 +221,13 @@ function createAuth({ db, appName, config }) {
     }
   });
 
-  // ---- logout: ?everywhere=1 also ends the TIG-SSO session ----
+  // ---- logout: this app's session, and a TIG-SSO user's TIG-SSO session ----
   async function logout(req, res) {
     const idToken = req.authSession?.idToken;
     const wasSso = req.user?.source === 'sso';
     clearSession(req, res);
-    const everywhere = ['1', 'true', 'yes'].includes(String(req.query.everywhere || req.body?.everywhere || ''));
-    if (cfg.sso && wasSso && everywhere) {
+    markSignedOut(res);
+    if (cfg.sso && wasSso) {
       try {
         return res.redirect(302, await oidc.logoutUrl(idToken, `${cfg.publicUrl}/`));
       } catch (err) {
@@ -214,7 +242,9 @@ function createAuth({ db, appName, config }) {
     return logout(req, res);
   });
 
-  return { router, attachUser, requireUser, store, mode: { local: cfg.local, sso: cfg.sso } };
+  // sameOrigin(req): the app's own POST routes use it to refuse cross-site
+  // form posts, as /local and /logout do.
+  return { router, attachUser, requireUser, sameOrigin, store, mode: { local: cfg.local, sso: cfg.sso } };
 }
 
 module.exports = { createAuth, safeNext, parseCookies };
